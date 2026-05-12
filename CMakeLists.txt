@@ -27,7 +27,6 @@ endif()
 # set(MY_BT_WS_ROOT "/root/my_behavior_tree")
 # list(APPEND CMAKE_PREFIX_PATH "${MY_BT_WS_ROOT}/install")
 # find_package(behaviortree_cpp REQUIRED)
-find_package(nlohmann_json REQUIRED)
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp") #从这里触发增量管理，不需要重新编译了，大多数时候效率更高
 
 # ===== 3. 创建库 =====
