@@ -1,0 +1,10 @@
+[requires]
+# 你的依赖，如 behaviortree_cpp/4.6.0（需要确认版本）
+#behaviortree_cpp/4.6.0
+
+[generators]
+CMakeToolchain
+CMakeDeps
+
+[layout]
+cmake_layout

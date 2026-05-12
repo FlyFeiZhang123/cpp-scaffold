@@ -1,0 +1,107 @@
+# .clang-tidy
+# 适配你的 base_settings 项目 (C++17 + CMake)
+# 已关闭变量名长度检查，保留腾讯命名规范 + 常用代码质量检查
+
+Checks: >
+  -*,
+  readability-identifier-naming,
+  modernize-*,
+  bugprone-*,
+  performance-*,
+  misc-*,
+  -readability-identifier-length,
+  -modernize-use-trailing-return-type,
+  -bugprone-easily-swappable-parameters,
+  -misc-include-cleaner,
+  -modernize-use-ranges
+
+HeaderFilterRegex: '^.*/include/.*\.h$'
+
+CheckOptions:
+  # ============================================================
+  # 命名规范：readability-identifier-naming  (核心)
+  # ============================================================
+
+  # --- 类型：类 / 结构体 / 枚举 / 类型别名 / 模板参数等 ---
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.UnionCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeTemplateParameterCase
+    value: CamelCase
+
+  # 枚举值：与常量相同 (k开头 + CamelCase)
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: 'k'
+
+  # --- 变量：常规变量 / 全局变量 / 静态变量 ---
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticVariableCase
+    value: lower_case
+
+  # 结构体成员变量：全小写+下划线，无前后缀
+  - key: readability-identifier-naming.StructMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.StructMemberSuffix
+    value: ''
+
+  # 类成员变量：全小写+下划线，后缀 '_'
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberSuffix
+    value: '_'
+
+  # --- 常量  (k + CamelCase) ---
+  - key: readability-identifier-naming.ConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstantPrefix
+    value: 'k'
+
+  # 静态常量 / 全局常量 同样适用 (继承 ConstantCase)
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: 'k'
+  - key: readability-identifier-naming.StaticConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.StaticConstantPrefix
+    value: 'k'
+
+  # --- 函数 / 方法 / 静态 / 自由函数 ---
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.MethodCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticMethodCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalFunctionCase
+    value: lower_case
+
+  # 指针 / 引用之类的修饰符对齐风格 (可选)
+  - key: readability-identifier-naming.PointerParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.ReferenceParameterCase
+    value: lower_case
+
+  # --- 命名空间 ---
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+
+  # --- 宏 ---
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+
+  # --- 类型别名 (typedef / using) ---
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase

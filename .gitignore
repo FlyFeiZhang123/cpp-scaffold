@@ -1,0 +1,16 @@
+# 构建目录
+/build/
+/build-*/
+
+# 性能分析输出
+/perf/
+
+# 工具缓存
+/.cache/
+*.profraw
+
+/doctest-offline/
+
+# CMake 生成的文件（如果落在源码树里）
+CMakeUserPresets.json
+compile_commands.json
