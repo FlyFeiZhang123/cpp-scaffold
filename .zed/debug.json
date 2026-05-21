@@ -1,9 +1,13 @@
 [
   {
-    "label": "Debug __EXECUTABLE_NAME__ (GDB)",
+    "label": "Debug __EXECUTABLE_NAME__ (GDB)", // "build": {
+    //   "command": "make",
+    //   "args": ["-j8"],
+    //   "cwd": "$ZED_WORKTREE_ROOT"
+    // },
+    "program": "$ZED_WORKTREE_ROOT/build/__EXECUTABLE_NAME__",
     "request": "launch",
-    "program": "./build/__EXECUTABLE_NAME__",
-    "adapter": "gdb",
-    "cwd": "${workspace_root}",
+    "adapter": "GDB",
+    "cwd": "$ZED_WORKTREE_ROOT",
   },
 ]
