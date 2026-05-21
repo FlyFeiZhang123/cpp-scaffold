@@ -71,11 +71,11 @@ fi
 
 if [ "$EDITOR" = "zed" ]; then
     mkdir -p .zed
-    if [ -f .zed/tasks.json ]; then
-        echo "已生成 .zed/tasks.json,如需重新生成,请先手动删除。"
+    if [ -f .zed/debug.json ]; then
+        echo "已生成 .zed/debug.json,如需重新生成,请先手动删除。"
     else
-        sed "s/__EXECUTABLE_NAME__/$EXECUTABLE_NAME/g" "$BASE_SETTINGS_DIR/.zed/tasks.json" > .zed/tasks.json
-        echo "已生成 .zed/tasks.json"
+        sed "s/__EXECUTABLE_NAME__/$EXECUTABLE_NAME/g" "$BASE_SETTINGS_DIR/.zed/debug.json" > .zed/debug.json
+        echo "已生成 .zed/debug.json"
     fi
 fi
 

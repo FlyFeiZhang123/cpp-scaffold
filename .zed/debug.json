@@ -1,0 +1,9 @@
+[
+  {
+    "label": "Debug __EXECUTABLE_NAME__ (GDB)",
+    "request": "launch",
+    "program": "./build/__EXECUTABLE_NAME__",
+    "adapter": "gdb",
+    "cwd": "${workspace_root}",
+  },
+]

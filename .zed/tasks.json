@@ -1,9 +1,0 @@
-[
-  {
-    "label": "Debug __EXECUTABLE_NAME__ (GDB)",
-    "command": "gdb",
-    "args": ["--quiet", "--interpreter=mi", "./build/__EXECUTABLE_NAME__"],
-    "cwd": "${workspace_root}",
-    "env": {},
-  },
-]
