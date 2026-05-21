@@ -36,11 +36,11 @@ target_include_directories(${LIB_NAME} PUBLIC include/)   # 库的头文件公�
 # ===== 4. 创建可执行文件（示例程序）=====
 add_executable(${EXECUTABLE_NAME} example/${EXECUTABLE_SRC})   # 假设示例入口在 example/main.cpp
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include/)
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE ${LIB_NAME} nlohmann_json::nlohmann_json)
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE ${LIB_NAME} )
 # target_link_libraries(${EXECUTABLE_NAME} PRIVATE behaviortree_cpp::behaviortree_cpp)
 
 # ===== 5. 应用编译/链接选项到库和可执行文件 =====
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")    
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 # 调试信息
     if(USE_FOR_VALGRIND)
         target_compile_options(${LIB_NAME} PRIVATE -gdwarf-4)

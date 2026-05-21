@@ -11,19 +11,20 @@ fi
 
 # 检查是否提供了参数
 if [ $# -lt 2 ]; then
-    echo "用法: $0 <PROJECT_NAME> <EXECUTABLE_NAME> [NEAD_CONAN]"
-    echo "例如: $0 my_project my_app y"
+    echo "用法: $0 <PROJECT_NAME> <EXECUTABLE_NAME> <NEAD_CONAN> <VSCODE/ZED>"
+    echo "例如: $0 my_project my_app y z"
     exit 1
 fi
 
 PROJECT_NAME=$1
 EXECUTABLE_NAME=$2
 CONAN_FLAG=${3:-"n"}
+EDITOR=${4:-"zed"}
 
 echo "设置项目名称: $PROJECT_NAME"
 echo "设置可执行文件名称: $EXECUTABLE_NAME"
 
-mkdir -p include src tests .vscode
+mkdir -p include src tests
 if [ ! -f src/placeholder.cpp ]; then
     touch src/placeholder.cpp
 fi
@@ -49,7 +50,7 @@ if [ "$CONAN_FLAG" = "y" ]; then
     safe_cp "$BASE_SETTINGS_DIR/conanfile.txt" "./conanfile.txt"
 fi
 safe_cp "$BASE_SETTINGS_DIR/example" "./example"
-safe_cp "$BASE_SETTINGS_DIR/Doxyfile" "./Doxyfile" 
+safe_cp "$BASE_SETTINGS_DIR/Doxyfile" "./Doxyfile"
 safe_cp "$BASE_SETTINGS_DIR/tests/CMakeLists.txt" "tests/CMakeLists.txt"
 safe_cp "$BASE_SETTINGS_DIR/tests/test_main.cpp" "tests/test_main.cpp"
 safe_cp "$BASE_SETTINGS_DIR/.gitignore" ".gitignore"
@@ -67,14 +68,32 @@ else
     echo "已生成 CMakeLists.txt"
 fi
 
-if [ -f .vscode/launch.json ]; then
-    echo "已生成 .vscode/launch.json,如需重新生成,请先手动删除。"
-else 
-    sed "s/__EXECUTABLE_NAME__/$EXECUTABLE_NAME/g" "$BASE_SETTINGS_DIR/.vscode/launch.json" > .vscode/launch.json
-    echo "已生成 .vscode/launch.json"
+
+if [ "$EDITOR" = "zed" ]; then
+    mkdir -p .zed
+    if [ -f .zed/tasks.json ]; then
+        echo "已生成 .zed/tasks.json,如需重新生成,请先手动删除。"
+    else
+        sed "s/__EXECUTABLE_NAME__/$EXECUTABLE_NAME/g" "$BASE_SETTINGS_DIR/.zed/tasks.json" > .zed/tasks.json
+        echo "已生成 .zed/tasks.json"
+    fi
 fi
 
-safe_cp "$BASE_SETTINGS_DIR/.vscode/settings.json" ".vscode/settings.json"
+if [ "$EDITOR" = "vscode" ]; then
+    mkdir -p .vscode
+    if [ -f .vscode/launch.json ]; then
+        echo "已生成 .vscode/launch.json,如需重新生成,请先手动删除。"
+    else
+        sed "s/__EXECUTABLE_NAME__/$EXECUTABLE_NAME/g" "$BASE_SETTINGS_DIR/.vscode/launch.json" > .vscode/launch.json
+        echo "已生成 .vscode/launch.json"
+    fi
+    if [ -f .vscode/settings.json ]; then
+        echo "已生成 .vscode/settings.json,如需重新生成,请先手动删除。"
+    else
+        safe_cp "$BASE_SETTINGS_DIR/.vscode/settings.json" ".vscode/settings.json"
+    fi
+fi
+
 
 chmod u+x ./my_build.bash ./perf_use.bash
 
