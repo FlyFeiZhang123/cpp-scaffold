@@ -62,6 +62,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         target_link_options(${LIB_NAME} PRIVATE -fsanitize=thread)
         target_compile_options(${EXECUTABLE_NAME} PRIVATE -fsanitize=thread -fno-omit-frame-pointer -O1)
         target_link_options(${EXECUTABLE_NAME} PRIVATE -fsanitize=thread)
+        #setarch $(uname -m) -R ./build-debug-tsan/test_exe  通过这个操作关闭ASLR（地址随机化）
     endif()
 
     if(ENABLE_UBSAN)
