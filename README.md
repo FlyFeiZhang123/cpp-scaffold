@@ -129,6 +129,8 @@ valgrind --leak-check=full ./build/<EXECUTABLE_NAME>
 
 ```
 base_settings/
+├── .vscode/                # VSCode 配置
+├── .zed/                   # Zed 配置
 ├── basic_install.bash      # 基础工具安装（gcc、cmake、clangd、valgrind 等）
 ├── conan_install.bash      # Conan 2.x 安装
 ├── perf_install.bash       # perf + FlameGraph 安装
@@ -173,6 +175,9 @@ sudo sh -c 'echo -1 > /proc/sys/kernel/perf_event_paranoid'
 
 **Q: 没有网络时如何编译测试？**
 将 doctest 源码放在 `~/base_settings/doctest-offline/` 目录下，CMake 会自动使用本地缓存，不再从网络拉取。
+
+**Q: 添加库目录后，clangd未提示，但是编译成功？**
+`CMakeLists.txt` 中的配置使得必须有对应cpp的.h 才会被加入编译，否则不会管这个目录的clangd提示以及相关功能。
 
 ---
 
