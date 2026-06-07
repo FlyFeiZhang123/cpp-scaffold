@@ -61,14 +61,15 @@ if [ "$ENABLE_ASAN" = "ON" ] && [ "$ENABLE_TSAN" = "ON" ]; then
     exit 1
 fi
 
-# 创建构建目录
-mkdir -p "$BUILD_DIR"
-echo "构建目录: $BUILD_DIR"
+#用这些目录的时候要注意clangd识别，不过大多数时候只要有一个项目有编译过都会产生cache,用这个cache可以用于编译的其他版本的跳转
 # BUILD_DIR="build-${BUILD_TYPE,,}"
 # [ "$ENABLE_ASAN" = "ON" ] && BUILD_DIR="${BUILD_DIR}-asan"
 # [ "$ENABLE_TSAN" = "ON" ] && BUILD_DIR="${BUILD_DIR}-tsan"
 # [ "$ENABLE_UBSAN" = "ON" ] && BUILD_DIR="${BUILD_DIR}-ubsan"
 # [ "$USE_FOR_VALGRIND" = "ON" ] && BUILD_DIR="${BUILD_DIR}-valgrind"
+# 创建构建目录
+mkdir -p "$BUILD_DIR"
+echo "构建目录: $BUILD_DIR"
 
 # 判断是否使用 Conan
 USE_CONAN=OFF

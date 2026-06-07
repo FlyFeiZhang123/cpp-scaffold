@@ -24,7 +24,7 @@ EDITOR=${4:-"zed"}
 echo "设置项目名称: $PROJECT_NAME"
 echo "设置可执行文件名称: $EXECUTABLE_NAME"
 
-mkdir -p include src tests
+mkdir -p include src tests third_party
 if [ ! -f src/placeholder.cpp ]; then
     touch src/placeholder.cpp
 fi
