@@ -19,7 +19,7 @@ fi
 PROJECT_NAME=$1
 EXECUTABLE_NAME=$2
 CONAN_FLAG=${3:-"n"}
-EDITOR=${4:-"zed"}
+EDITOR=${4:-"z"}
 
 echo "设置项目名称: $PROJECT_NAME"
 echo "设置可执行文件名称: $EXECUTABLE_NAME"
@@ -69,7 +69,7 @@ else
 fi
 
 
-if [ "$EDITOR" = "zed" ]; then
+if [ "$EDITOR" = "z" ]; then
     mkdir -p .zed
     if [ -f .zed/debug.json ]; then
         echo "已生成 .zed/debug.json,如需重新生成,请先手动删除。"
@@ -79,7 +79,7 @@ if [ "$EDITOR" = "zed" ]; then
     fi
 fi
 
-if [ "$EDITOR" = "vscode" ]; then
+if [ "$EDITOR" = "v" ]; then
     mkdir -p .vscode
     if [ -f .vscode/launch.json ]; then
         echo "已生成 .vscode/launch.json,如需重新生成,请先手动删除。"
