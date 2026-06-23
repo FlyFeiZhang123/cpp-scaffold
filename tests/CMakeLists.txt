@@ -1,10 +1,10 @@
 # 如果有离线缓存，直接用；否则才从网络拉
 if(EXISTS "$ENV{HOME}/base_settings/doctest-offline")
-    set(DOCTEST_URL "$ENV{HOME}/base_settings/doctest-offline")
-    set(DOCTEST_TAG "")
+  set(DOCTEST_URL "$ENV{HOME}/base_settings/doctest-offline")
+  set(DOCTEST_TAG "")
 else()
-    set(DOCTEST_URL "https://gitee.com/mirrors/doctest.git")
-    set(DOCTEST_TAG v2.4.11)
+  set(DOCTEST_URL "https://github.com/doctest/doctest.git")
+  set(DOCTEST_TAG v2.4.11)
 endif()
 
 include(FetchContent)
