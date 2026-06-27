@@ -43,7 +43,7 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp") #从这里触发增量�
 # PUBLIC：头文件路径不仅对当前目标的源文件生效，还会传递给所有链接此目标的下游目标。这样 test_exe 也能自动获得 muduo 的头文件搜索路径。
 # INTERFACE：仅用于传递头文件路径给下游目标，当前目标自身的源文件不包含（适用于纯头文件库）。这里不适用。
 add_library(${LIB_NAME} ${SOURCES})
-target_include_directories(${LIB_NAME} PUBLIC include/)   # 库的头文件公开给链接者
+target_include_directories(${LIB_NAME} PUBLIC include/)   # 库的头文件公开给链接者，这里如果想要让这个传递给test,需要link_libraries的时候用PUBLIC
 
 # ===== 4. 创建可执行文件（示例程序）=====
 add_executable(${EXECUTABLE_NAME} example/${EXECUTABLE_SRC})   # 假设示例入口在 example/main.cpp

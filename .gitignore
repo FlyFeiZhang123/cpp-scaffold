@@ -11,6 +11,9 @@
 
 /doctest-offline/
 
+#日志
+/logs/*
+
 # CMake 生成的文件（如果落在源码树里）
 CMakeUserPresets.json
 compile_commands.json
