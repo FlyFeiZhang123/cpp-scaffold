@@ -3,7 +3,10 @@ set -e
 
 echo "Installing basic tools..."
 sudo apt update
-sudo apt install -y gcc g++ ninja-build gdb cmake clangd clang-format doxygen graphviz
+sudo apt install -y gcc g++ ninja-build gdb cmake clangd clang-format 
+
+echo "Installing optional tools..."
+sudo apt install -y doxygen graphviz ccache
 
 echo "Installing Valgrind..."
 sudo apt install -y valgrind

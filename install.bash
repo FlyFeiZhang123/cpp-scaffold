@@ -1,100 +1,80 @@
 #!/bin/bash
-
 set -e
 
-# 模板目录优先级：环境变量 > 默认值
 BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR:-$HOME/base_settings}"
-if [ ! -d "$BASE_SETTINGS_DIR" ]; then
-    echo "错误: 模板目录 $BASE_SETTINGS_DIR 不存在"
-    exit 1
-fi
-
-# 检查是否提供了参数
-if [ $# -lt 2 ]; then
-    echo "用法: $0 <PROJECT_NAME> <EXECUTABLE_NAME> <NEAD_CONAN> <VSCODE/ZED>"
-    echo "例如: $0 my_project my_app y z"
-    exit 1
-fi
+[ -d "$BASE_SETTINGS_DIR" ] || { echo "错误: 模板目录 $BASE_SETTINGS_DIR 不存在"; exit 1; }
+[ $# -lt 2 ] && { echo "用法: $0 <项目名> <可执行文件名> [y/n=conan] [v/z=编辑器]"; echo "例如: $0 my_project my_app y v"; exit 1; }
 
 PROJECT_NAME=$1
 EXECUTABLE_NAME=$2
 CONAN_FLAG=${3:-"n"}
 EDITOR=${4:-"z"}
 
-echo "设置项目名称: $PROJECT_NAME"
-echo "设置可执行文件名称: $EXECUTABLE_NAME"
+echo "项目: $PROJECT_NAME  可执行文件: $EXECUTABLE_NAME"
 
 mkdir -p include src tests third_party logs docs
-if [ ! -f src/placeholder.cpp ]; then
-    touch src/placeholder.cpp
-fi
+[ -f src/placeholder.cpp ] || touch src/placeholder.cpp
 
-# 安全复制函数：目标存在则跳过，否则递归复制（目录）或普通复制（文件）
-safe_cp() {
-    local src="$1"
-    local dst="$2"
+# ---- 复制模板文件（跳过已存在的）----
+# 用法: copy_tpl <源> <目标> [<占位符> <替换值>]
+copy_tpl() {
+    local src="$1" dst="$2"
+
     if [ -e "$dst" ]; then
-        echo "目标 $dst 已存在，跳过复制"
+        echo "  跳过: $dst (已存在)"
         return 0
     fi
-    if [ -d "$src" ]; then
+
+    if [ $# -ge 4 ]; then
+        sed "s|$3|$4|g" "$src" > "$dst"
+    elif [ -d "$src" ]; then
         cp -r "$src" "$dst"
     else
         cp "$src" "$dst"
     fi
+    echo "  生成: $dst"
 }
 
-safe_cp "$BASE_SETTINGS_DIR/my_build.bash" "./my_build.bash"
-safe_cp "$BASE_SETTINGS_DIR/perf_use.bash" "./perf_use.bash"
-if [ "$CONAN_FLAG" = "y" ]; then
-    safe_cp "$BASE_SETTINGS_DIR/conanfile.txt" "./conanfile.txt"
-fi
-safe_cp "$BASE_SETTINGS_DIR/example" "./example"
-safe_cp "$BASE_SETTINGS_DIR/Doxyfile" "./Doxyfile"
-safe_cp "$BASE_SETTINGS_DIR/tests/CMakeLists.txt" "tests/CMakeLists.txt"
-safe_cp "$BASE_SETTINGS_DIR/tests/test_main.cpp" "tests/test_main.cpp"
-safe_cp "$BASE_SETTINGS_DIR/.gitignore" ".gitignore"
-safe_cp "$BASE_SETTINGS_DIR/README.md" "README.md"
-safe_cp "$BASE_SETTINGS_DIR/.clang-format" ".clang-format" #clang-format -style=Google -dump-config > .clang-format生成后改动了缩进相关的
-safe_cp "$BASE_SETTINGS_DIR/.clang-tidy" ".clang-tidy"
+# ---- 通用模板文件 ----
+for f in my_build.bash perf_use.bash; do
+    copy_tpl "$BASE_SETTINGS_DIR/$f" "./$f"
+done
+[ "$CONAN_FLAG" = "y" ] && copy_tpl "$BASE_SETTINGS_DIR/conanfile.txt" "./conanfile.txt"
 
-# 生成 CMakeLists.txt（已存在则不覆盖）
-if [ -f CMakeLists.txt ]; then
-    echo "CMakeLists.txt 已存在，跳过生成。如需重新生成，请先手动删除。"
+copy_tpl "$BASE_SETTINGS_DIR/example"       "./example"
+copy_tpl "$BASE_SETTINGS_DIR/Doxyfile"      "./Doxyfile"
+copy_tpl "$BASE_SETTINGS_DIR/.gitignore"    "./.gitignore"
+copy_tpl "$BASE_SETTINGS_DIR/.clang-format" "./.clang-format"
+copy_tpl "$BASE_SETTINGS_DIR/.clang-tidy"   "./.clang-tidy"
+copy_tpl "$BASE_SETTINGS_DIR/README.md"     "./README.md"
+copy_tpl "$BASE_SETTINGS_DIR/tests/CMakeLists.txt"  "tests/CMakeLists.txt"
+copy_tpl "$BASE_SETTINGS_DIR/tests/test_main.cpp"   "tests/test_main.cpp"
+
+# ---- CMakeLists.txt（需替换项目名和可执行文件名）----
+if [ ! -e CMakeLists.txt ]; then
+    sed -e "s|__PROJECT_NAME__|$PROJECT_NAME|g" \
+        -e "s|__EXECUTABLE_NAME__|$EXECUTABLE_NAME|g" \
+        "$BASE_SETTINGS_DIR/CMakeLists.txt" > CMakeLists.txt
+    echo "  生成: CMakeLists.txt"
 else
-    sed -e "s/^set(PROJECT_NAME .*)$/set(PROJECT_NAME $PROJECT_NAME)/" \
-    -e "s/^[[:space:]]*set(EXECUTABLE_NAME [^)]*).*/set(EXECUTABLE_NAME $EXECUTABLE_NAME)/" \
-    "$BASE_SETTINGS_DIR/CMakeLists.txt" > CMakeLists.txt
-    echo "已生成 CMakeLists.txt"
+    echo "  跳过: CMakeLists.txt (已存在)"
 fi
 
-
+# ---- 编辑器配置 ----
 if [ "$EDITOR" = "z" ]; then
     mkdir -p .zed
-    if [ -f .zed/debug.json ]; then
-        echo "已生成 .zed/debug.json,如需重新生成,请先手动删除。"
-    else
-        sed "s/__EXECUTABLE_NAME__/$EXECUTABLE_NAME/g" "$BASE_SETTINGS_DIR/.zed/debug.json" > .zed/debug.json
-        echo "已生成 .zed/debug.json"
-    fi
-fi
+    copy_tpl "$BASE_SETTINGS_DIR/.zed/debug.json" ".zed/debug.json" \
+        "__EXECUTABLE_NAME__" "$EXECUTABLE_NAME"
 
-if [ "$EDITOR" = "v" ]; then
+elif [ "$EDITOR" = "v" ]; then
     mkdir -p .vscode
-    if [ -f .vscode/launch.json ]; then
-        echo "已生成 .vscode/launch.json,如需重新生成,请先手动删除。"
-    else
-        sed "s/__EXECUTABLE_NAME__/$EXECUTABLE_NAME/g" "$BASE_SETTINGS_DIR/.vscode/launch.json" > .vscode/launch.json
-        echo "已生成 .vscode/launch.json"
-    fi
-    if [ -f .vscode/settings.json ]; then
-        echo "已生成 .vscode/settings.json,如需重新生成,请先手动删除。"
-    else
-        safe_cp "$BASE_SETTINGS_DIR/.vscode/settings.json" ".vscode/settings.json"
-    fi
+    copy_tpl "$BASE_SETTINGS_DIR/.vscode/launch.json" ".vscode/launch.json" \
+        "__EXECUTABLE_NAME__" "$EXECUTABLE_NAME"
+    for f in settings.json tasks.json sudo_gdb.sh; do
+        copy_tpl "$BASE_SETTINGS_DIR/.vscode/$f" ".vscode/$f"
+    done
+    [ -f .vscode/sudo_gdb.sh ] && chmod +x .vscode/sudo_gdb.sh
 fi
-
 
 chmod u+x ./my_build.bash ./perf_use.bash
-
-echo "安装完成！项目已创建为 $PROJECT_NAME,可执行文件名为 $EXECUTABLE_NAME"
+echo "✅ 项目 $PROJECT_NAME 创建完成"

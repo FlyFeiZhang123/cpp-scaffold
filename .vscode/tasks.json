@@ -1,0 +1,13 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "my_build",
+            "type": "shell",
+            "command": "./my_build.bash",
+            "options": { "cwd": "${workspaceFolder}" },
+            "group": { "kind": "build", "isDefault": true },
+            "presentation": { "reveal": "always", "panel": "shared" }
+        }
+    ]
+}

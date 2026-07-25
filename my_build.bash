@@ -1,137 +1,155 @@
 #!/bin/bash
-# 用法: ./build.sh [配置...]
-# 配置可选: asan, tsan, ubsan, valgrind, release
-# 可组合: 如 ./build.sh asan ubsan
+# 用法: ./my_build.bash [选项...]
+# 示例:
+#   ./my_build.bash                        # 默认: Debug + ASAN + perf
+#   ./my_build.bash release                # Release 构建
+#   ./my_build.bash asan perf              # 显式开启
+#   ./my_build.bash tsan no-perf           # TSan + 关帧指针
+#   ./my_build.bash no-asan no-perf lto    # 纯 Release 无 sanitizer
+#   ./my_build.bash --exe-src=placeholder.cpp test
+#   ./my_build.bash no-march               # WSL2 用
+set -e
 
-set -e  # 遇到错误立即退出
-
-if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    cat <<EOF
+usage() {
+    cat << EOF
 用法: $0 [选项...]
-选项:
-  asan, tsan, ubsan    启用对应 sanitizer
-  valgrind             生成 Valgrind 兼容调试信息
-  release / debug      构建类型（默认 debug)
-  --exe-src=<file>     指定 example/ 下的源文件（默认 main.cpp)
+
+Sanitizers:
+  asan, tsan, ubsan     启用对应 sanitizer
+  no-asan, no-tsan      关闭（默认 ASAN=ON）
+
+性能分析:
+  perf / no-perf         帧指针开关（默认 perf=ON）
+  march / no-march       -march=native 开关（默认 ON，WSL2 用 no-march）
+
+优化:
+  lto                    启用链接时优化（默认 OFF）
+
+构建:
+  release / debug        构建类型（默认 Debug）
+  --exe-src=<file>       指定 example/ 下的源文件（默认 main.cpp）
+  test                   编译后运行测试
 EOF
     exit 0
-fi
+}
 
-# 默认值
+[[ "$1" == "-h" || "$1" == "--help" ]] && usage
+
+# ===== 默认值 =====
 BUILD_DIR="build"
 BUILD_TYPE="Debug"
-ENABLE_ASAN=OFF
+ENABLE_ASAN=ON
 ENABLE_TSAN=OFF
 ENABLE_UBSAN=OFF
+ENABLE_PERF=ON
+USE_MARCH_NATIVE=ON
+ENABLE_LTO=OFF
 USE_FOR_VALGRIND=OFF
 EXECUTABLE_SRC="main.cpp"
 RUN_TESTS=OFF
 
-
-# 解析参数
+# ===== 解析参数 =====
 for arg in "$@"; do
     case "$arg" in
-        asan)   ENABLE_ASAN=ON ;;
-        tsan)   ENABLE_TSAN=ON ;;
-        ubsan)  ENABLE_UBSAN=ON ;;
-        valgrind) USE_FOR_VALGRIND=ON ;;
-        release) BUILD_TYPE="Release" ;;
-        debug)   BUILD_TYPE="Debug" ;;
-        --exe-src=*)
-            EXECUTABLE_SRC="${arg#*=}"
-            ;;
-        test)   RUN_TESTS=ON ;;
+        asan)       ENABLE_ASAN=ON     ;;
+        no-asan)    ENABLE_ASAN=OFF    ;;
+        tsan)       ENABLE_TSAN=ON     ;;
+        no-tsan)    ENABLE_TSAN=OFF    ;;
+        ubsan)      ENABLE_UBSAN=ON    ;;
+        valgrind)   USE_FOR_VALGRIND=ON ;;
+        perf)       ENABLE_PERF=ON     ;;
+        no-perf)    ENABLE_PERF=OFF    ;;
+        march)      USE_MARCH_NATIVE=ON ;;
+        no-march)   USE_MARCH_NATIVE=OFF ;;
+        lto)        ENABLE_LTO=ON      ;;
+        release)    BUILD_TYPE="Release" ;;
+        debug)      BUILD_TYPE="Debug"   ;;
+        test)       RUN_TESTS=ON       ;;
+        --exe-src=*) EXECUTABLE_SRC="${arg#*=}" ;;
         *)
-            echo "未知参数: $arg"
-            echo "支持: asan, tsan, ubsan, valgrind, release, debug, --exe-src=<file>, test"
-            exit 1
-            ;;
+            echo "未知参数: $arg"; usage ;;
     esac
 done
 
-# 检查源文件是否存在
-if [ ! -f "example/$EXECUTABLE_SRC" ]; then
-    echo "错误: 源文件 example/$EXECUTABLE_SRC 不存在"
-    exit 1
-fi
+# ===== 校验 =====
+[ ! -f "example/$EXECUTABLE_SRC" ] && echo "错误: example/$EXECUTABLE_SRC 不存在" && exit 1
+[ "$ENABLE_ASAN" = "ON" ] && [ "$ENABLE_TSAN" = "ON" ] && echo "错误: ASan 和 TSan 互斥" && exit 1
 
-# 检查互斥: ASan 和 TSan 不能同时启用
-if [ "$ENABLE_ASAN" = "ON" ] && [ "$ENABLE_TSAN" = "ON" ]; then
-    echo "错误: ASan 和 TSan 不能同时启用"
-    exit 1
-fi
+# ===== 输出配置摘要 =====
+HEAD="──"
+_info() { printf "  %-16s %s\n" "$1" "$2"; }
+echo "$HEAD Build Config $HEAD"
+_info "Build type"   "$BUILD_TYPE"
+_info "ASAN"         "$ENABLE_ASAN"
+_info "TSAN"         "$ENABLE_TSAN"
+_info "UBSAN"        "$ENABLE_UBSAN"
+_info "Perf (fp)"    "$ENABLE_PERF"
+_info "march=native" "$USE_MARCH_NATIVE"
+_info "LTO"          "$ENABLE_LTO"
+_info "CCache"       "$(command -v ccache >/dev/null 2>&1 && echo 'enabled' || echo 'not installed')"
+_info "Exe src"      "example/$EXECUTABLE_SRC"
+echo ""
 
-#用这些目录的时候要注意clangd识别，不过大多数时候只要有一个项目有编译过都会产生cache,用这个cache可以用于编译的其他版本的跳转
-# BUILD_DIR="build-${BUILD_TYPE,,}"
-# [ "$ENABLE_ASAN" = "ON" ] && BUILD_DIR="${BUILD_DIR}-asan"
-# [ "$ENABLE_TSAN" = "ON" ] && BUILD_DIR="${BUILD_DIR}-tsan"
-# [ "$ENABLE_UBSAN" = "ON" ] && BUILD_DIR="${BUILD_DIR}-ubsan"
-# [ "$USE_FOR_VALGRIND" = "ON" ] && BUILD_DIR="${BUILD_DIR}-valgrind"
-# 创建构建目录
 mkdir -p "$BUILD_DIR"
-echo "构建目录: $BUILD_DIR"
 
-# 判断是否使用 Conan
+# 多配置隔离构建目录（按需取消注释）
+# BUILD_DIR="build-${BUILD_TYPE,,}"
+# [ "$ENABLE_ASAN" = "ON" ]    && BUILD_DIR="${BUILD_DIR}-asan"
+# [ "$ENABLE_TSAN" = "ON" ]    && BUILD_DIR="${BUILD_DIR}-tsan"
+# [ "$ENABLE_UBSAN" = "ON" ]   && BUILD_DIR="${BUILD_DIR}-ubsan"
+# [ "$USE_FOR_VALGRIND" = "ON" ] && BUILD_DIR="${BUILD_DIR}-valgrind"
+# mkdir -p "$BUILD_DIR"
+# echo "构建目录: $BUILD_DIR"
+
+# ===== Conan =====
 USE_CONAN=OFF
 if command -v conan >/dev/null 2>&1 && [ -f conanfile.txt ]; then
-    echo "检测到 Conan 和 conanfile.txt,将使用 Conan 管理依赖"
+    echo "检测到 Conan，安装依赖..."
     USE_CONAN=ON
+    conan profile detect 2>/dev/null || true
+    conan install . -s build_type="$BUILD_TYPE" --output-folder="$BUILD_DIR" --build=missing
 
-    # 生成 profile（如果还没有）
-    if [ ! -f ~/.conan2/profiles/default ]; then
-        conan profile detect
-    fi
-
-    # 安装依赖
-    conan install . \
-        -s build_type="$BUILD_TYPE" \
-        --output-folder="$BUILD_DIR" \
-        --build=missing
-
-    # 设置 toolchain 文件路径
-    # 尝试多个可能路径
     for path in \
         "$BUILD_DIR/build/generators/conan_toolchain.cmake" \
         "$BUILD_DIR/build/${BUILD_TYPE}/generators/conan_toolchain.cmake" \
         "$BUILD_DIR/conan_toolchain.cmake"; do
-        if [ -f "$path" ]; then
-            TOOLCHAIN_FILE="$path"
-            break
-        fi
+        [ -f "$path" ] && TOOLCHAIN_FILE="$path" && break
     done
-else
-    echo "未检测到 Conan 或 conanfile.txt，将使用系统依赖（请确保依赖已安装）"
 fi
 
-# 配置 CMake
+# ===== CMake =====
+# 自动选择构建工具：ninja > make
+BUILD_TOOL="make"
+command -v ninja >/dev/null 2>&1 && BUILD_TOOL="ninja"
+
 CMAKE_ARGS=(
     -B "$BUILD_DIR"
-    -G Ninja
+    -G "${BUILD_TOOL^}"              # Ninja 或 Unix Makefiles
     -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
     -DENABLE_ASAN="$ENABLE_ASAN"
     -DENABLE_TSAN="$ENABLE_TSAN"
     -DENABLE_UBSAN="$ENABLE_UBSAN"
+    -DENABLE_PERF="$ENABLE_PERF"
+    -DUSE_MARCH_NATIVE="$USE_MARCH_NATIVE"
+    -DENABLE_LTO="$ENABLE_LTO"
     -DUSE_FOR_VALGRIND="$USE_FOR_VALGRIND"
     -DEXECUTABLE_SRC="$EXECUTABLE_SRC"
 )
 
-# 如果使用 Conan 且 toolchain 文件存在，则添加 toolchain 参数
-if [ "$USE_CONAN" = "ON" ] && [ -f "$TOOLCHAIN_FILE" ]; then
-    CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE")
-fi
-
-if [ "$USE_CONAN" = "ON" ] && [ ! -f "$TOOLCHAIN_FILE" ]; then
-    echo "警告: Conan 执行完成但未生成 toolchain 文件: $TOOLCHAIN_FILE"
-    # 可选：退出或继续但标记不使用 toolchain
-fi
+[ "$USE_CONAN" = "ON" ] && [ -f "${TOOLCHAIN_FILE:-}" ] && CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE")
 
 cmake "${CMAKE_ARGS[@]}"
 
-# 编译
-ninja -C "$BUILD_DIR"
+# ===== 编译 =====
+if [ "$BUILD_TOOL" = "ninja" ]; then
+    ninja -C "$BUILD_DIR"
+else
+    make -C "$BUILD_DIR" -j"$(nproc)"
+fi
 
+# ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then
-    echo "运行测试..."
-    cd "$BUILD_DIR" && ctest --output-on-failure
-    cd ..
+    echo ""
+    echo "$HEAD Run Tests $HEAD"
+    (cd "$BUILD_DIR" && ctest --output-on-failure)
 fi
