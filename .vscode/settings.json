@@ -25,7 +25,7 @@
   },
   "logViewer.watch": [
     {
-      "title": "Car Logs",
+      "title": "Test Logs",
       "pattern": "logs/**/*.log"
     }
   ]
