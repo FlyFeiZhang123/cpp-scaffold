@@ -1,6 +1,10 @@
 # 如果有离线缓存，直接用；否则才从网络拉
-if(EXISTS "$ENV{HOME}/base_settings/doctest-offline")
-  set(DOCTEST_URL "$ENV{HOME}/base_settings/doctest-offline")
+set(_BS_DIR "$ENV{BASE_SETTINGS_DIR}")
+if(NOT _BS_DIR)
+  set(_BS_DIR "$ENV{HOME}/base_settings")
+endif()
+if(EXISTS "${_BS_DIR}/doctest-offline")
+  set(DOCTEST_URL "${_BS_DIR}/doctest-offline")
   set(DOCTEST_TAG "")
 else()
   set(DOCTEST_URL "https://github.com/doctest/doctest.git")

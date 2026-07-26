@@ -9,7 +9,13 @@ echo "============================================"
 echo ""
 
 # 提示检查镜像源（国内网络建议换源，但允许跳过）
-if [ -f /etc/apt/sources.list ] && grep -q 'archive.ubuntu.com' /etc/apt/sources.list 2>/dev/null; then
+_mirror_warn=false
+if [ -f /etc/apt/sources.list ] && grep -q 'archive.ubuntu.com\|ports.ubuntu.com' /etc/apt/sources.list 2>/dev/null; then
+    _mirror_warn=true
+elif [ -f /etc/apt/sources.list.d/ubuntu.sources ] && grep -q 'archive.ubuntu.com\|ports.ubuntu.com' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null; then
+    _mirror_warn=true
+fi
+if $_mirror_warn; then
     echo "⚠️  检测到 apt 使用官方源，国内可能较慢"
     echo "   换源: sudo ${BASE_SETTINGS_DIR}/setup_mirror.bash"
     echo "   继续: 直接按 Enter"
