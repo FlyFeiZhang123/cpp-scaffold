@@ -252,6 +252,14 @@ sudo sh -c 'echo -1 > /proc/sys/kernel/perf_event_paranoid'
 
 不能，脚本和 CMake 都会报错阻止。
 
+**Q: TSan 下程序无法运行 / 启动即崩溃？**
+
+TSan 需要大块连续虚拟内存，和系统的 ASLR（地址随机化）冲突。运行时关闭 ASLR：
+
+```bash
+setarch $(uname -m) -R ./build/<EXECUTABLE_NAME>
+```
+
 **Q: 新增/删除了 src/ 下的源文件，编译没生效？**
 
 CMakeLists.txt 使用了 `CONFIGURE_DEPENDS` 自动检测，通常无需手动操作。如遇异常，删除 `build/` 重新编译。
