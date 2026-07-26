@@ -238,8 +238,20 @@ CMakeLists.txt 使用 `GLOB_RECURSE`，只有存在对应 .h 的 .cpp 才会被�
 - `sudo` 权限（安装阶段）
 - 网络连接（首次下载工具链和依赖）
 
+### VS Code 扩展
+
+使用 VS Code 调试需安装以下扩展：
+
+| 扩展                       | 必需 | 用途                     |
+| -------------------------- | :--: | ------------------------ |
+| vscode-clangd              |  ✓   | 代码补全、跳转、格式化   |
+| CMake Tools                |  ✓   | CMake 集成、F5 调试      |
+| Log Viewer                 |      | `logs/*.log` 日志监控    |
+
+> 注意：装完 `vscode-clangd` 后建议禁用 VS Code 内置的 C++ 扩展，避免冲突。
+
 ---
 
 ## 许可
 
-本项目基于 [Apache License 2.0](LICENSE) 发布。
+本项目基于 [木兰宽松许可证 第2版 (MulanPSL2)](http://license.coscl.org.cn/MulanPSL2) 发布。

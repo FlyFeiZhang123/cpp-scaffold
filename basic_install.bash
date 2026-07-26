@@ -10,6 +10,9 @@ sudo apt install -y \
     doxygen graphviz \
     ccache
 
+# 限制 ccache 缓存大小（默认 5GB 无上限，避免撑满磁盘）
+ccache --max-size=10G
+
 echo ""
 echo "=== 验证安装 ==="
 cmake  --version | head -1
