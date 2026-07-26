@@ -1,14 +1,55 @@
 #!/bin/bash
+set -e
 
-BASE_SETTINGS_DIR="$HOME/base_settings"
+BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR:-$HOME/base_settings}"
 
-# 直接执行，不添加 sudo
-${BASE_SETTINGS_DIR}/basic_install.bash
-${BASE_SETTINGS_DIR}/conan_install.bash
-${BASE_SETTINGS_DIR}/perf_install.bash
+echo "============================================"
+echo "  base_settings 一键安装"
+echo "============================================"
+echo ""
 
-echo "所有工具安装完成。请注意："
-echo "如果想要用快捷生成的话可以用如下命令"
-echo "grep -qxF 'alias newproj="$HOME/base_settings/install.bash"' ~/.bashrc || echo 'alias newproj="$HOME/base_settings/install.bash"' >> ~/.bashrc"
-echo "  - 如果 conan 命令不可用，请执行 'source ~/.bashrc' 或重启终端。"
-echo "  - 使用 perf 时若需要非 root 采样，请考虑设置 kernel.perf_event_paranoid=-1（见 perf_install.bash 提示）。"
+# 提示检查镜像源（国内网络建议换源，但允许跳过）
+if [ -f /etc/apt/sources.list ] && grep -q 'archive.ubuntu.com' /etc/apt/sources.list 2>/dev/null; then
+    echo "⚠️  检测到 apt 使用官方源，国内可能较慢"
+    echo "   换源: sudo ${BASE_SETTINGS_DIR}/setup_mirror.bash"
+    echo "   继续: 直接按 Enter"
+    echo "   取消: Ctrl+C"
+    read -r _ 2>/dev/null || true
+fi
+
+export BASE_SETTINGS_DIR
+
+echo "→ 1/3 基础工具"
+"${BASE_SETTINGS_DIR}/basic_install.bash"
+echo ""
+
+echo "→ 2/3 Conan"
+"${BASE_SETTINGS_DIR}/conan_install.bash"
+echo ""
+
+echo "→ 3/3 perf + FlameGraph"
+"${BASE_SETTINGS_DIR}/perf_install.bash"
+echo ""
+
+echo "============================================"
+echo "  全部安装完成"
+echo "============================================"
+echo ""
+
+# ---- 配置 ~/.bashrc（只写一次，不重复）----
+if ! grep -q "BASE_SETTINGS_DIR" ~/.bashrc 2>/dev/null; then
+    cat >> ~/.bashrc << BASHRC_EOF
+
+# base_settings
+export BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR}"
+alias newproj='\$BASE_SETTINGS_DIR/install.bash'
+BASHRC_EOF
+    echo "✅ 已配置 ~/.bashrc（BASE_SETTINGS_DIR + newproj 别名）"
+    echo "   执行 source ~/.bashrc 后生效"
+else
+    echo "~/.bashrc 已配置，跳过"
+fi
+
+echo ""
+echo "  conan 不可用? source ~/.bashrc"
+echo "  perf 非 root? sudo sh -c 'echo -1 > /proc/sys/kernel/perf_event_paranoid'"

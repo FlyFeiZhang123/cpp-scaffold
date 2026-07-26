@@ -1,20 +1,20 @@
 #!/bin/bash
 set -e
 
-echo "Installing basic tools..."
+echo "=== 安装基础开发工具 ==="
 sudo apt update
-sudo apt install -y gcc g++ ninja-build gdb cmake clangd clang-format 
+sudo apt install -y \
+    gcc g++ cmake ninja-build gdb \
+    clangd clang-format \
+    valgrind \
+    doxygen graphviz \
+    ccache
 
-echo "Installing optional tools..."
-sudo apt install -y doxygen graphviz ccache
-
-echo "Installing Valgrind..."
-sudo apt install -y valgrind
-
-# 验证安装
-if valgrind --version; then
-    echo "Valgrind installed successfully."
-else
-    echo "Valgrind installation failed."
-    exit 1
-fi
+echo ""
+echo "=== 验证安装 ==="
+cmake  --version | head -1
+g++    --version | head -1
+clangd --version | head -1
+valgrind --version | head -1
+echo ""
+echo "✅ 基础工具安装完成"

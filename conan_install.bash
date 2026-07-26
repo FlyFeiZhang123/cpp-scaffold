@@ -1,16 +1,17 @@
 #!/bin/bash
 set -e
 
-# 更新并安装 pipx（需要 sudo）
-sudo apt update
-sudo apt install -y pipx
+echo "=== 安装 Conan 2.x ==="
 
-# 以下操作不需要 root
+if command -v conan &>/dev/null; then
+    echo "Conan 已安装: $(conan --version)"
+    exit 0
+fi
+
+sudo apt install -y pipx
 pipx install conan
 pipx ensurepath
 
-# 提示用户手动刷新 PATH
-echo "Please run 'source ~/.bashrc' or restart your terminal to use 'conan'."
-
-# 验证（使用完整路径）
-$HOME/.local/bin/conan --version
+echo ""
+echo "✅ Conan 安装完成"
+echo "   如命令不可用，请执行: source ~/.bashrc"
