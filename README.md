@@ -88,6 +88,11 @@ my_project/
 ```
 
 > 库名自动跟随项目名，例如 `my_project_lib`。
+>
+> **首次进入项目后，先编译一次**：生成二进制到 `build/` 目录，调试和 clangd 补全才能工作：
+> ```bash
+> ./my_build.bash
+> ```
 
 ### 4. 编译项目
 
