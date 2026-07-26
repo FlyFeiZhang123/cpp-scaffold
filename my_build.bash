@@ -36,7 +36,6 @@ EOF
 [[ "$1" == "-h" || "$1" == "--help" ]] && usage
 
 # ===== 默认值 =====
-BUILD_DIR="build"
 BUILD_TYPE="Debug"
 ENABLE_ASAN=ON
 ENABLE_TSAN=OFF
@@ -75,11 +74,18 @@ done
 [ ! -f "example/$EXECUTABLE_SRC" ] && echo "错误: example/$EXECUTABLE_SRC 不存在" && exit 1
 [ "$ENABLE_ASAN" = "ON" ] && [ "$ENABLE_TSAN" = "ON" ] && echo "错误: ASan 和 TSan 互斥" && exit 1
 
+# ===== 构建目录 =====
+BUILD_DIR="build/${BUILD_TYPE,,}"
+[ "$ENABLE_ASAN" = "ON" ]  && BUILD_DIR="${BUILD_DIR}-asan"
+[ "$ENABLE_TSAN" = "ON" ]  && BUILD_DIR="${BUILD_DIR}-tsan"
+[ "$ENABLE_UBSAN" = "ON" ] && BUILD_DIR="${BUILD_DIR}-ubsan"
+
 # ===== 输出配置摘要 =====
 HEAD="──"
 _info() { printf "  %-16s %s\n" "$1" "$2"; }
 echo "$HEAD Build Config $HEAD"
 _info "Build type"   "$BUILD_TYPE"
+_info "Build dir"    "$BUILD_DIR"
 _info "ASAN"         "$ENABLE_ASAN"
 _info "TSAN"         "$ENABLE_TSAN"
 _info "UBSAN"        "$ENABLE_UBSAN"
@@ -90,31 +96,22 @@ _info "CCache"       "$(command -v ccache >/dev/null 2>&1 && echo 'enabled' || e
 _info "Exe src"      "example/$EXECUTABLE_SRC"
 echo ""
 
-mkdir -p "$BUILD_DIR"
-
-# 多配置隔离构建目录（按需取消注释）
-# BUILD_DIR="build-${BUILD_TYPE,,}"
-# [ "$ENABLE_ASAN" = "ON" ]    && BUILD_DIR="${BUILD_DIR}-asan"
-# [ "$ENABLE_TSAN" = "ON" ]    && BUILD_DIR="${BUILD_DIR}-tsan"
-# [ "$ENABLE_UBSAN" = "ON" ]   && BUILD_DIR="${BUILD_DIR}-ubsan"
-# [ "$USE_FOR_VALGRIND" = "ON" ] && BUILD_DIR="${BUILD_DIR}-valgrind"
-# mkdir -p "$BUILD_DIR"
-# echo "构建目录: $BUILD_DIR"
-
 # ===== Conan =====
 USE_CONAN=OFF
 if command -v conan >/dev/null 2>&1 && [ -f conanfile.txt ]; then
     echo "检测到 Conan，安装依赖..."
     USE_CONAN=ON
     conan profile detect 2>/dev/null || true
-    conan install . -s build_type="$BUILD_TYPE" --output-folder="$BUILD_DIR" --build=missing
 
-    for path in \
-        "$BUILD_DIR/build/generators/conan_toolchain.cmake" \
-        "$BUILD_DIR/build/${BUILD_TYPE}/generators/conan_toolchain.cmake" \
-        "$BUILD_DIR/conan_toolchain.cmake"; do
-        [ -f "$path" ] && TOOLCHAIN_FILE="$path" && break
-    done
+    # cmake_layout 在项目根下生成 build/<BuildType>/generators/
+    TOOLCHAIN_FILE="build/${BUILD_TYPE}/generators/conan_toolchain.cmake"
+
+    # 工具链已有则跳过，除非 conanfile.txt 被更新
+    if [ ! -f "$TOOLCHAIN_FILE" ] || [ conanfile.txt -nt "$TOOLCHAIN_FILE" ]; then
+        conan install . -s build_type="$BUILD_TYPE" --output-folder=. --build=missing
+    fi
+
+    [ -f "$TOOLCHAIN_FILE" ] || { echo "错误: 找不到工具链 $TOOLCHAIN_FILE"; exit 1; }
 fi
 
 # ===== CMake =====
@@ -146,6 +143,10 @@ if [ "$BUILD_TOOL" = "ninja" ]; then
 else
     make -C "$BUILD_DIR" -j"$(nproc)"
 fi
+
+# 更新软链接，launch.json 指向 build/test_exe 即可调试最新产物
+# BUILD_DIR 形如 build/debug-asan，取相对路径 debug-asan/test_exe
+ln -sf "${BUILD_DIR#build/}/test_exe" "build/test_exe"
 
 # ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then

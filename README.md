@@ -119,24 +119,58 @@ cd my_project
 ### 5. 运行与调试
 
 ```bash
-# 运行
-./build/<EXECUTABLE_NAME>
+# 运行（软链接始终指向最后一次构建产物）
+./build/test_exe
+
+# 或直接指定某个构建目录下的产物
+./build/debug-asan/test_exe
+./build/release/test_exe
 
 # Valgrind 检测内存泄漏
-valgrind --leak-check=full ./build/<EXECUTABLE_NAME>
+valgrind --leak-check=full ./build/test_exe
 
 # 性能采样（默认 wrap 模式，程序结束自动停）
-./perf_use.bash ./build/<EXECUTABLE_NAME>
+./perf_use.bash ./build/test_exe
 
 # 采样 30 秒（适合长期运行的程序）
-./perf_use.bash ./build/<EXECUTABLE_NAME> -t 30
+./perf_use.bash ./build/test_exe -t 30
 
 # 手动按 Enter 停止（适合交互调试）
-./perf_use.bash ./build/<EXECUTABLE_NAME> -m
+./perf_use.bash ./build/test_exe -m
 
 # 浏览器查看火焰图
 ./perf_use.bash --serve
 ```
+
+> **调试**：VS Code 中按 `F5` 即可，`launch.json` 已配置 `preLaunchTask` 自动增量编译，`program` 指向 `build/test_exe` 软链接。
+
+---
+
+## 构建目录结构
+
+构建目录按配置自动命名，多个变体可共存：
+
+```
+build/
+├── test_exe -> debug-asan/test_exe   ← 软链接，始终指向最新构建产物
+├── Debug/                            ← Conan 生成（Debug 变体共享工具链）
+│   └── generators/
+├── debug-asan/                       ← CMake 构建产物
+├── debug-tsan/                       ← 另一变体，互不影响
+├── Release/
+│   └── generators/
+└── release/
+```
+
+| 命令                          | 构建目录              |
+| ----------------------------- | --------------------- |
+| `./my_build.bash`（默认）     | `build/debug-asan/`   |
+| `./my_build.bash no-asan`     | `build/debug/`        |
+| `./my_build.bash tsan`        | `build/debug-tsan/`   |
+| `./my_build.bash release`     | `build/release/`      |
+| `./my_build.bash release lto` | `build/release/`      |
+
+> **Conan**：工具链由 `cmake_layout` 按 `build_type` 分两层（Debug / Release），同一类型的不同 sanitizer 变体共享工具链。`./my_build.bash` 首次运行执行 `conan install`，后续增量跳过。
 
 ---
 
