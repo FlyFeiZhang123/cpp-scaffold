@@ -10,6 +10,12 @@ EXECUTABLE_NAME=$2
 CONAN_FLAG=${3:-"n"}
 EDITOR=${4:-"z"}
 
+# 防止可执行文件与测试目标冲突
+if [ "$EXECUTABLE_NAME" = "${PROJECT_NAME}_unit_test" ]; then
+    echo "错误: 可执行文件名不能为 ${PROJECT_NAME}_unit_test（与测试目标冲突）"
+    exit 1
+fi
+
 echo "项目: $PROJECT_NAME  可执行文件: $EXECUTABLE_NAME"
 
 mkdir -p include src tests third_party logs docs

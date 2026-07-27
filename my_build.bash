@@ -95,7 +95,6 @@ _info "LTO"          "$ENABLE_LTO"
 _info "CCache"       "$(command -v ccache >/dev/null 2>&1 && echo 'enabled' || echo 'not installed')"
 _info "Exe src"      "example/$EXECUTABLE_SRC"
 echo ""
-
 # ===== Conan =====
 USE_CONAN=OFF
 if command -v conan >/dev/null 2>&1 && [ -f conanfile.txt ]; then
@@ -143,10 +142,6 @@ if [ "$BUILD_TOOL" = "ninja" ]; then
 else
     make -C "$BUILD_DIR" -j"$(nproc)"
 fi
-
-# 更新软链接，launch.json 指向 build/test_exe 即可调试最新产物
-# BUILD_DIR 形如 build/debug-asan，取相对路径 debug-asan/test_exe
-ln -sf "${BUILD_DIR#build/}/test_exe" "build/test_exe"
 
 # ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then
