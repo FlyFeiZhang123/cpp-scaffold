@@ -6,6 +6,7 @@
 #   ./my_build.bash asan perf              # 显式开启
 #   ./my_build.bash tsan no-perf           # TSan + 关帧指针
 #   ./my_build.bash no-asan no-perf lto    # 纯 Release 无 sanitizer
+#   ./my_build.bash --exe-src=other.cpp     # 切换编译目标（CMake缓存记录，后续无需再传）
 #   ./my_build.bash --exe-src=placeholder.cpp test
 #   ./my_build.bash no-march               # WSL2 用
 set -e
@@ -27,7 +28,7 @@ Sanitizers:
 
 构建:
   release / debug        构建类型（默认 Debug）
-  --exe-src=<file>       指定 example/ 下的源文件（默认 main.cpp）
+  --exe-src=<file>       切换 example/ 下编译源文件，CMake 缓存自动持久化
   test                   编译后运行测试
 EOF
     exit 0
@@ -44,7 +45,8 @@ ENABLE_PERF=ON
 USE_MARCH_NATIVE=ON
 ENABLE_LTO=OFF
 USE_FOR_VALGRIND=OFF
-EXECUTABLE_SRC="main.cpp"
+EXECUTABLE_SRC="main.cpp"     # 仅首次构建的默认值，之后由 CMake 缓存决定
+_EXPLICIT_EXE_SRC=0
 RUN_TESTS=OFF
 
 # ===== 解析参数 =====
@@ -64,7 +66,7 @@ for arg in "$@"; do
         release)    BUILD_TYPE="Release" ;;
         debug)      BUILD_TYPE="Debug"   ;;
         test)       RUN_TESTS=ON       ;;
-        --exe-src=*) EXECUTABLE_SRC="${arg#*=}" ;;
+        --exe-src=*) EXECUTABLE_SRC="${arg#*=}"; _EXPLICIT_EXE_SRC=1 ;;
         *)
             echo "未知参数: $arg"; usage ;;
     esac
@@ -129,8 +131,10 @@ CMAKE_ARGS=(
     -DUSE_MARCH_NATIVE="$USE_MARCH_NATIVE"
     -DENABLE_LTO="$ENABLE_LTO"
     -DUSE_FOR_VALGRIND="$USE_FOR_VALGRIND"
-    -DEXECUTABLE_SRC="$EXECUTABLE_SRC"
 )
+
+# 仅当用户显式指定 --exe-src 时才传 cmake，否则由 cmake 缓存决定
+[ "$_EXPLICIT_EXE_SRC" = "1" ] && CMAKE_ARGS+=(-DEXECUTABLE_SRC="$EXECUTABLE_SRC")
 
 [ "$USE_CONAN" = "ON" ] && [ -f "${TOOLCHAIN_FILE:-}" ] && CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE")
 
