@@ -8,6 +8,9 @@
   },
   "cmake.sourceDirectory": "${workspaceFolder}",
   "cmake.ignoreCMakeListsMissing": true,
+  "files.associations": {
+    "*.h": "cpp"
+  },
   "clangd.path": "/usr/bin/clangd",
   "clangd.arguments": [
     "--background-index",

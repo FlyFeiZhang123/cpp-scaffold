@@ -1,7 +1,6 @@
 {
   "header guard": {
     "prefix": "once",
-    "scope": "cpp,c",
     "body": [
       "#pragma once",
       "",
@@ -11,7 +10,6 @@
   },
   "class with ctor/dtor": {
     "prefix": "classdef",
-    "scope": "cpp,c",
     "body": [
       "class ${1:ClassName} {",
       "public:",
@@ -31,7 +29,6 @@
   },
   "class with custom ctor/dtor (no copy)": {
     "prefix": "classmove",
-    "scope": "cpp,c",
     "body": [
       "class ${1:ClassName} {",
       "public:",
