@@ -76,7 +76,7 @@ elif [ "$EDITOR" = "v" ]; then
     mkdir -p .vscode
     copy_tpl "$BASE_SETTINGS_DIR/.vscode/launch.json" ".vscode/launch.json" \
         "__EXECUTABLE_NAME__" "$EXECUTABLE_NAME"
-    for f in settings.json tasks.json sudo_gdb.sh; do
+    for f in settings.json tasks.json sudo_gdb.sh cpp.code-snippets; do
         copy_tpl "$BASE_SETTINGS_DIR/.vscode/$f" ".vscode/$f"
     done
     [ -f .vscode/sudo_gdb.sh ] && chmod +x .vscode/sudo_gdb.sh

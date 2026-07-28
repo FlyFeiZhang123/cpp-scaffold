@@ -1,0 +1,52 @@
+{
+  "header guard": {
+    "prefix": "once",
+    "scope": "cpp,c",
+    "body": [
+      "#pragma once",
+      "",
+      "$0"
+    ],
+    "description": "Insert #pragma once"
+  },
+  "class with ctor/dtor": {
+    "prefix": "classdef",
+    "scope": "cpp,c",
+    "body": [
+      "class ${1:ClassName} {",
+      "public:",
+      "    ${1:ClassName}()  = default;",
+      "    ~${1:ClassName}() = default;",
+      "",
+      "    ${1:ClassName}(const ${1:ClassName}&)            = default;",
+      "    ${1:ClassName}& operator=(const ${1:ClassName}&) = default;",
+      "    ${1:ClassName}(${1:ClassName}&&)                 = default;",
+      "    ${1:ClassName}& operator=(${1:ClassName}&&)      = default;",
+      "",
+      "private:",
+      "    $0",
+      "};"
+    ],
+    "description": "Class with rule-of-five defaults"
+  },
+  "class with custom ctor/dtor (no copy)": {
+    "prefix": "classmove",
+    "scope": "cpp,c",
+    "body": [
+      "class ${1:ClassName} {",
+      "public:",
+      "    ${1:ClassName}()  = default;",
+      "    ~${1:ClassName}() = default;",
+      "",
+      "    ${1:ClassName}(const ${1:ClassName}&)            = delete;",
+      "    ${1:ClassName}& operator=(const ${1:ClassName}&) = delete;",
+      "    ${1:ClassName}(${1:ClassName}&&)                 = default;",
+      "    ${1:ClassName}& operator=(${1:ClassName}&&)      = default;",
+      "",
+      "private:",
+      "    $0",
+      "};"
+    ],
+    "description": "Move-only class (copy deleted)"
+  }
+}
