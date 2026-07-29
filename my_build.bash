@@ -30,6 +30,7 @@ Sanitizers:
   release / debug        构建类型（默认 Debug）
   --exe-src=<file>       切换 example/ 下编译源文件，CMake 缓存自动持久化
   test                   编译后运行测试
+  --which, -w            查看当前软链接指向哪个构建变体
 EOF
     exit 0
 }
@@ -67,6 +68,16 @@ for arg in "$@"; do
         debug)      BUILD_TYPE="Debug"   ;;
         test)       RUN_TESTS=ON       ;;
         --exe-src=*) EXECUTABLE_SRC="${arg#*=}"; _EXPLICIT_EXE_SRC=1 ;;
+        --which|-w)
+            EXECUTABLE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
+            LINK="build/${EXECUTABLE_NAME}"
+            if [ -L "$LINK" ]; then
+                echo "build/${EXECUTABLE_NAME} → $(readlink "$LINK")"
+            else
+                echo "build/${EXECUTABLE_NAME} 不存在（请先构建）"
+            fi
+            exit 0
+            ;;
         *)
             echo "未知参数: $arg"; usage ;;
     esac
