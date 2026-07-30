@@ -3,8 +3,6 @@
 
 #include "calculator.h"
 
-using namespace __PROJECT_NAME__;
-
 TEST_CASE("Calculator::add") {
     Calculator calc;
     CHECK(calc.add(2, 3) == 5);
@@ -26,6 +24,6 @@ TEST_CASE("Calculator::mul") {
 TEST_CASE("Calculator::div") {
     Calculator calc;
     CHECK(calc.div(6, 3) == 2);
-    CHECK(calc.div(5, 2) == 2);  // integer division
+    CHECK(calc.div(5, 2) == 2);
     CHECK_THROWS_AS(calc.div(1, 0), std::invalid_argument);
 }

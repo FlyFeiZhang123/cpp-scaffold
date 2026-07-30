@@ -55,10 +55,10 @@ copy_tpl "$BASE_SETTINGS_DIR/README.md"     "./README.md"
 copy_tpl "$BASE_SETTINGS_DIR/templates/tests/CMakeLists.txt"  "tests/CMakeLists.txt"
 copy_tpl "$BASE_SETTINGS_DIR/templates/tests/test_main.cpp"   "tests/test_main.cpp"
 
-# ---- 示例源码，替换占位符 ----
+# ---- 示例源码 ----
+copy_tpl "$BASE_SETTINGS_DIR/templates/include/calculator.h"  "include/calculator.h"
 for f in calculator.h calculator.cpp; do
-    copy_tpl "$BASE_SETTINGS_DIR/templates/src/$f" "src/$f" \
-        "__PROJECT_NAME__" "$PROJECT_NAME"
+    copy_tpl "$BASE_SETTINGS_DIR/templates/src/$f" "src/$f"
 done
 
 # ---- CMakeLists.txt（需替换项目名和可执行文件名）----
