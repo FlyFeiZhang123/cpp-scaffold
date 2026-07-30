@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR:-$HOME/base_settings}"
+BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR:-$HOME/cpp-scaffold}"
 
 echo "============================================"
-echo "  base_settings 一键安装"
+echo "  cpp-scaffold 一键安装"
 echo "============================================"
 echo ""
 
@@ -46,7 +46,7 @@ echo ""
 if ! grep -q "BASE_SETTINGS_DIR" ~/.bashrc 2>/dev/null; then
     cat >> ~/.bashrc << BASHRC_EOF
 
-# base_settings
+# cpp-scaffold
 export BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR}"
 alias newproj='\$BASE_SETTINGS_DIR/install.bash'
 BASHRC_EOF

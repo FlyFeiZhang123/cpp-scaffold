@@ -1,4 +1,4 @@
-# base_settings — C++ 项目脚手架
+# cpp-scaffold — C++ 项目脚手架
 
 一套现代 C++ 开发环境模板，一键装环境、一键建项目、一键编译调试。
 
@@ -25,8 +25,8 @@
 ### 1. 安装环境（只需一次）
 
 ```bash
-git clone https://gitee.com/flyzhang123/base_settings ~/base_settings
-cd ~/base_settings
+git clone https://gitee.com/flyzhang123/cpp-scaffold ~/cpp-scaffold
+cd ~/cpp-scaffold
 
 # 国内网络先换源（阿里云 + 清华双源，自动适配 x86_64/ARM64,如果需要的话）
 sudo ./scripts/setup_mirror.bash
@@ -42,7 +42,7 @@ sudo ./scripts/setup_mirror.bash
 `setup_all.bash` 已自动将以下内容写入 `~/.bashrc`：
 
 ```bash
-export BASE_SETTINGS_DIR="$HOME/base_settings"
+export BASE_SETTINGS_DIR="$HOME/cpp-scaffold"
 alias newproj='$BASE_SETTINGS_DIR/install.bash'
 ```
 
@@ -167,7 +167,7 @@ valgrind --leak-check=full ./build/<EXECUTABLE_NAME>
 ## 项目结构（模板仓库）
 
 ```
-base_settings/
+cpp-scaffold/
 ├── scripts/                 # 安装脚本
 │   ├── setup_mirror.bash    #   apt 换源（阿里云主 + 清华副）
 │   ├── basic_install.bash   #   gcc、cmake、ninja、clangd 等
@@ -240,7 +240,7 @@ CMakeLists.txt 使用了 `CONFIGURE_DEPENDS` 自动检测，通常无需手动�
 
 **Q: 没有网络时如何编译测试？**
 
-将 doctest 源码放在 `~/base_settings/doctest-offline/` 下，CMake 自动使用本地缓存。
+将 doctest 源码放在 `~/cpp-scaffold/doctest-offline/` 下，CMake 自动使用本地缓存。
 
 **Q: 添加库目录后 clangd 不提示但编译正常？**
 

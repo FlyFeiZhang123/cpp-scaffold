@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR:-$HOME/base_settings}"
+BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR:-$HOME/cpp-scaffold}"
 [ -d "$BASE_SETTINGS_DIR" ] || { echo "错误: 模板目录 $BASE_SETTINGS_DIR 不存在"; exit 1; }
 [ $# -lt 2 ] && { echo "用法: $0 <项目名> <可执行文件名> [y/n=conan] [v/z=编辑器]"; echo "例如: $0 my_project my_app y v"; exit 1; }
 
