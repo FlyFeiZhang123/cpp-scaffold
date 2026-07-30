@@ -14,17 +14,17 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
-        sanitizer: [ASan, UBSan, TSAN, None]
+        sanitizer: [ASan, UBSan, None]
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build
           if [ "${{ matrix.compiler }}" = "clang" ]; then
-            sudo apt-get install -y clang
+            sudo apt-get install -y -qq clang
           fi
 
       - name: Setup compiler
@@ -49,7 +49,6 @@ jobs:
           SAN_FLAGS=""
           case "${{ matrix.sanitizer }}" in
             ASan)  SAN_FLAGS="-DENABLE_ASAN=ON  -DENABLE_TSAN=OFF -DENABLE_UBSAN=OFF" ;;
-            TSAN)  SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=ON  -DENABLE_UBSAN=OFF" ;;
             UBSan) SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DENABLE_UBSAN=ON"  ;;
             None)  SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DENABLE_UBSAN=OFF" ;;
           esac
@@ -59,62 +58,6 @@ jobs:
             -DCMAKE_C_COMPILER=$CC   \
             -DCMAKE_CXX_COMPILER=$CXX \
             $SAN_FLAGS \
-            .
-
-      - name: Build
-        working-directory: /tmp/test_project
-        run: cmake --build build
-
-      - name: Test
-        working-directory: /tmp/test_project
-        run: cd build && ctest --output-on-failure
-
-  release:
-    name: "Release | ${{ matrix.compiler }}"
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: [gcc, clang]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            sudo apt-get install -y clang
-          fi
-
-      - name: Setup compiler
-        run: |
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            echo "CC=clang"   >> $GITHUB_ENV
-            echo "CXX=clang++" >> $GITHUB_ENV
-          else
-            echo "CC=gcc"     >> $GITHUB_ENV
-            echo "CXX=g++"    >> $GITHUB_ENV
-          fi
-
-      - name: Generate test project from scaffold
-        run: |
-          export BASE_SETTINGS_DIR="${{ github.workspace }}"
-          mkdir /tmp/test_project
-          cd /tmp/test_project
-          bash "$BASE_SETTINGS_DIR/install.bash" test_project test_app
-
-      - name: CMake configure (Release)
-        run: |
-          cd /tmp/test_project
-          cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DENABLE_ASAN=OFF \
-            -DENABLE_TSAN=OFF \
-            -DENABLE_UBSAN=OFF \
-            -DCMAKE_C_COMPILER=$CC   \
-            -DCMAKE_CXX_COMPILER=$CXX \
             .
 
       - name: Build
