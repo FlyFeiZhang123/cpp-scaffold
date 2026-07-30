@@ -48,6 +48,7 @@ done
 
 copy_tpl "$BASE_SETTINGS_DIR/templates/example"       "./example"
 copy_tpl "$BASE_SETTINGS_DIR/templates/Doxyfile"      "./Doxyfile"
+copy_tpl "$BASE_SETTINGS_DIR/doctest-offline" "./doctest-offline"
 copy_tpl "$BASE_SETTINGS_DIR/.gitignore"    "./.gitignore"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-format" "./.clang-format"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-tidy"   "./.clang-tidy"

@@ -1,8 +1,17 @@
+# 本地优先，离线可用；否则从 GitHub 拉取
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
+    set(DOCTEST_URL "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
+    set(DOCTEST_TAG "")
+else()
+    set(DOCTEST_URL "https://github.com/doctest/doctest.git")
+    set(DOCTEST_TAG v2.4.11)
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
     doctest
-    GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG v2.4.11
+    GIT_REPOSITORY ${DOCTEST_URL}
+    GIT_TAG ${DOCTEST_TAG}
 )
 FetchContent_MakeAvailable(doctest)
 
