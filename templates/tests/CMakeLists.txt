@@ -1,21 +1,8 @@
-# 如果有离线缓存，直接用；否则才从网络拉
-set(_BS_DIR "$ENV{BASE_SETTINGS_DIR}")
-if(NOT _BS_DIR)
-  set(_BS_DIR "$ENV{HOME}/cpp-scaffold")
-endif()
-if(EXISTS "${_BS_DIR}/doctest-offline")
-  set(DOCTEST_URL "${_BS_DIR}/doctest-offline")
-  set(DOCTEST_TAG "")
-else()
-  set(DOCTEST_URL "https://github.com/doctest/doctest.git")
-  set(DOCTEST_TAG v2.4.11)
-endif()
-
 include(FetchContent)
 FetchContent_Declare(
     doctest
-    GIT_REPOSITORY ${DOCTEST_URL}
-    GIT_TAG ${DOCTEST_TAG}
+    GIT_REPOSITORY https://github.com/doctest/doctest.git
+    GIT_TAG v2.4.11
 )
 FetchContent_MakeAvailable(doctest)
 
