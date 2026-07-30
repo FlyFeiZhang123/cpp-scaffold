@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    name: "${{ matrix.compiler }} | ${{ matrix.build_type }} | ${{ matrix.sanitizer }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Debug]
+        sanitizer: [ASan, UBSan, TSAN, None]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            sudo apt-get install -y clang
+          fi
+
+      - name: Setup compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang"   >> $GITHUB_ENV
+            echo "CXX=clang++" >> $GITHUB_ENV
+          else
+            echo "CC=gcc"     >> $GITHUB_ENV
+            echo "CXX=g++"    >> $GITHUB_ENV
+          fi
+
+      - name: CMake configure
+        run: |
+          SAN_FLAGS=""
+          case "${{ matrix.sanitizer }}" in
+            ASan)  SAN_FLAGS="-DENABLE_ASAN=ON  -DENABLE_TSAN=OFF -DENABLE_UBSAN=OFF" ;;
+            TSAN)  SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=ON  -DENABLE_UBSAN=OFF" ;;
+            UBSan) SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DENABLE_UBSAN=ON"  ;;
+            None)  SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DENABLE_UBSAN=OFF" ;;
+          esac
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_C_COMPILER=$CC   \
+            -DCMAKE_CXX_COMPILER=$CXX \
+            $SAN_FLAGS \
+            templates/
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure
+
+  release:
+    name: "Release build (gcc + clang)"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            sudo apt-get install -y clang
+          fi
+
+      - name: Setup compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang"   >> $GITHUB_ENV
+            echo "CXX=clang++" >> $GITHUB_ENV
+          else
+            echo "CC=gcc"     >> $GITHUB_ENV
+            echo "CXX=g++"    >> $GITHUB_ENV
+          fi
+
+      - name: CMake configure (Release)
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_ASAN=OFF \
+            -DENABLE_TSAN=OFF \
+            -DENABLE_UBSAN=OFF \
+            -DCMAKE_C_COMPILER=$CC   \
+            -DCMAKE_CXX_COMPILER=$CXX \
+            templates/
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure
