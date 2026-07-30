@@ -8,13 +8,12 @@ on:
 
 jobs:
   build:
-    name: "${{ matrix.compiler }} | ${{ matrix.build_type }} | ${{ matrix.sanitizer }}"
+    name: "${{ matrix.compiler }} | ${{ matrix.sanitizer }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
-        build_type: [Debug]
         sanitizer: [ASan, UBSan, TSAN, None]
 
     steps:
@@ -38,6 +37,13 @@ jobs:
             echo "CXX=g++"    >> $GITHUB_ENV
           fi
 
+      - name: Generate test project from scaffold
+        run: |
+          export BASE_SETTINGS_DIR="${{ github.workspace }}"
+          mkdir /tmp/test_project
+          cd /tmp/test_project
+          bash "$BASE_SETTINGS_DIR/install.bash" test_project test_app
+
       - name: CMake configure
         run: |
           SAN_FLAGS=""
@@ -47,23 +53,24 @@ jobs:
             UBSan) SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DENABLE_UBSAN=ON"  ;;
             None)  SAN_FLAGS="-DENABLE_ASAN=OFF -DENABLE_TSAN=OFF -DENABLE_UBSAN=OFF" ;;
           esac
+          cd /tmp/test_project
           cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER=$CC   \
             -DCMAKE_CXX_COMPILER=$CXX \
             $SAN_FLAGS \
-            templates/
+            .
 
       - name: Build
+        working-directory: /tmp/test_project
         run: cmake --build build
 
       - name: Test
-        run: |
-          cd build
-          ctest --output-on-failure
+        working-directory: /tmp/test_project
+        run: cd build && ctest --output-on-failure
 
   release:
-    name: "Release build (gcc + clang)"
+    name: "Release | ${{ matrix.compiler }}"
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     strategy:
@@ -91,8 +98,16 @@ jobs:
             echo "CXX=g++"    >> $GITHUB_ENV
           fi
 
+      - name: Generate test project from scaffold
+        run: |
+          export BASE_SETTINGS_DIR="${{ github.workspace }}"
+          mkdir /tmp/test_project
+          cd /tmp/test_project
+          bash "$BASE_SETTINGS_DIR/install.bash" test_project test_app
+
       - name: CMake configure (Release)
         run: |
+          cd /tmp/test_project
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DENABLE_ASAN=OFF \
@@ -100,12 +115,12 @@ jobs:
             -DENABLE_UBSAN=OFF \
             -DCMAKE_C_COMPILER=$CC   \
             -DCMAKE_CXX_COMPILER=$CXX \
-            templates/
+            .
 
       - name: Build
+        working-directory: /tmp/test_project
         run: cmake --build build
 
       - name: Test
-        run: |
-          cd build
-          ctest --output-on-failure
+        working-directory: /tmp/test_project
+        run: cd build && ctest --output-on-failure
