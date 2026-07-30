@@ -2,20 +2,16 @@
 # 验证：语法 → 生成项目 → 编译 → 测试
 version: '1.0'
 name: CI
+displayName: 脚手架自检
 
 triggers:
-  push:
-    branches:
-      include:
-        - .*
-  pull_request:
-    branches:
-      include:
-        - .*
+  trigger: auto
 
 stages:
   - name: lint
     displayName: 语法检查
+    strategy: naturally
+    trigger: auto
     steps:
       - step: shellcheck
         name: lint
@@ -26,9 +22,13 @@ stages:
           - apt-get update && apt-get install -y shellcheck
           - find . -name '*.bash' -exec bash -n {} \;
           - find . -name '*.bash' -exec shellcheck {} \;
+        strategy:
+          retry: "0"
 
   - name: verify
     displayName: 模板验证
+    strategy: naturally
+    trigger: auto
     steps:
       - step: generate
         name: gen
@@ -40,3 +40,5 @@ stages:
           - ./install.bash test_proj test_app n v
           - cd test_proj && ./my_build.bash debug no-asan
           - cd test_proj && ./my_build.bash test no-asan debug
+        strategy:
+          retry: "0"
