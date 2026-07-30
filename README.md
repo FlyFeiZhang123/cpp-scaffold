@@ -62,7 +62,6 @@ newproj my_project my_app y v
 
 ```
 my_project/
-├── .gitee-ci.yml              # Gitee CI
 ├── CMakeLists.txt
 ├── conanfile.txt              # 如果指定了 y
 ├── .gitignore
@@ -175,7 +174,6 @@ base_settings/
 │   ├── conan_install.bash   #   Conan 2.x
 │   └── perf_install.bash    #   perf + FlameGraph
 ├── templates/               # 项目模板（会被复制到新项目）
-│   ├── .gitee-ci.yml        #   CI 模板
 │   ├── CMakeLists.txt
 │   ├── conanfile.txt
 │   ├── my_build.bash        #   构建脚本
