@@ -157,6 +157,10 @@ else
     make -C "$BUILD_DIR" -j"$(nproc)"
 fi
 
+# ===== 更新根目录软链接（始终指向最新产物）=====
+EXE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
+ln -sfn "$BUILD_DIR/$EXE_NAME" "$EXE_NAME"
+
 # ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then
     echo ""
