@@ -70,11 +70,10 @@ for arg in "$@"; do
         --exe-src=*) EXECUTABLE_SRC="${arg#*=}"; _EXPLICIT_EXE_SRC=1 ;;
         --which|-w)
             EXECUTABLE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
-            LINK="build/${EXECUTABLE_NAME}"
-            if [ -L "$LINK" ]; then
-                echo "build/${EXECUTABLE_NAME} → $(readlink "$LINK")"
+            if [ -L "${EXECUTABLE_NAME}" ]; then
+                echo "${EXECUTABLE_NAME} → $(readlink "${EXECUTABLE_NAME}")"
             else
-                echo "build/${EXECUTABLE_NAME} 不存在（请先构建）"
+                echo "${EXECUTABLE_NAME} 不存在（请先构建）"
             fi
             exit 0
             ;;
