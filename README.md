@@ -29,7 +29,7 @@ git clone <你的仓库地址> ~/base_settings
 cd ~/base_settings
 
 # 国内网络先换源（阿里云 + 清华双源，自动适配 x86_64/ARM64）
-./setup_mirror.bash
+sudo ./scripts/setup_mirror.bash
 
 # 一键安装：gcc、cmake、ninja、clangd、conan、perf、FlameGraph 等
 ./setup_all.bash
@@ -200,6 +200,19 @@ build/
 
 ```
 base_settings/
+├── scripts/                 # 安装脚本
+│   ├── setup_mirror.bash    #   apt 换源（阿里云主 + 清华副）
+│   ├── basic_install.bash   #   gcc、cmake、ninja、clangd 等
+│   ├── conan_install.bash   #   Conan 2.x
+│   └── perf_install.bash    #   perf + FlameGraph
+├── templates/               # 项目模板（会被复制到新项目）
+│   ├── CMakeLists.txt
+│   ├── conanfile.txt
+│   ├── my_build.bash        #   构建脚本
+│   ├── perf_use.bash        #   性能分析
+│   ├── Doxyfile
+│   ├── example/
+│   └── tests/
 ├── .vscode/                 # VS Code 配置模板
 │   ├── launch.json
 │   ├── settings.json
@@ -207,25 +220,13 @@ base_settings/
 │   └── sudo_gdb.sh
 ├── .zed/                    # Zed 配置模板
 │   └── debug.json
-├── setup_all.bash           # 一键安装全部工具
-├── setup_mirror.bash        # apt 换源（阿里云主 + 清华副，适配 x86_64/ARM64）
-├── basic_install.bash       # gcc、cmake、ninja、clangd、valgrind 等
-├── conan_install.bash       # Conan 2.x
-├── perf_install.bash        # perf + FlameGraph
+├── setup_all.bash           # 一键安装（入口）
 ├── install.bash             # 项目初始化（newproj 入口）
-├── my_build.bash            # 项目构建（CMake + Ninja/Make + Conan）
-├── perf_use.bash            # 性能分析（wrap/按时长/手动 三种模式）
-├── CMakeLists.txt           # CMake 模板
-├── conanfile.txt            # Conan 模板
-├── .gitignore               # Git 忽略模板
-├── .clang-format            # 代码格式化
-├── .clang-tidy              # 静态分析
-├── example/
-│   └── main.cpp
-├── tests/
-│   ├── CMakeLists.txt
-│   └── test_main.cpp
-└── Doxyfile                 # Doxygen 配置模板
+├── .clang-format
+├── .clang-tidy
+├── .gitignore
+├── README.md
+└── LICENSE
 ```
 
 ---

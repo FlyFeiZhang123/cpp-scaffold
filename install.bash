@@ -43,24 +43,24 @@ copy_tpl() {
 
 # ---- 通用模板文件 ----
 for f in my_build.bash perf_use.bash; do
-    copy_tpl "$BASE_SETTINGS_DIR/$f" "./$f"
+    copy_tpl "$BASE_SETTINGS_DIR/templates/$f" "./$f"
 done
-[ "$CONAN_FLAG" = "y" ] && copy_tpl "$BASE_SETTINGS_DIR/conanfile.txt" "./conanfile.txt"
+[ "$CONAN_FLAG" = "y" ] && copy_tpl "$BASE_SETTINGS_DIR/templates/conanfile.txt" "./conanfile.txt"
 
-copy_tpl "$BASE_SETTINGS_DIR/example"       "./example"
-copy_tpl "$BASE_SETTINGS_DIR/Doxyfile"      "./Doxyfile"
+copy_tpl "$BASE_SETTINGS_DIR/templates/example"       "./example"
+copy_tpl "$BASE_SETTINGS_DIR/templates/Doxyfile"      "./Doxyfile"
 copy_tpl "$BASE_SETTINGS_DIR/.gitignore"    "./.gitignore"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-format" "./.clang-format"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-tidy"   "./.clang-tidy"
 copy_tpl "$BASE_SETTINGS_DIR/README.md"     "./README.md"
-copy_tpl "$BASE_SETTINGS_DIR/tests/CMakeLists.txt"  "tests/CMakeLists.txt"
-copy_tpl "$BASE_SETTINGS_DIR/tests/test_main.cpp"   "tests/test_main.cpp"
+copy_tpl "$BASE_SETTINGS_DIR/templates/tests/CMakeLists.txt"  "tests/CMakeLists.txt"
+copy_tpl "$BASE_SETTINGS_DIR/templates/tests/test_main.cpp"   "tests/test_main.cpp"
 
 # ---- CMakeLists.txt（需替换项目名和可执行文件名）----
 if [ ! -e CMakeLists.txt ]; then
     sed -e "s|__PROJECT_NAME__|$PROJECT_NAME|g" \
         -e "s|__EXECUTABLE_NAME__|$EXECUTABLE_NAME|g" \
-        "$BASE_SETTINGS_DIR/CMakeLists.txt" > CMakeLists.txt
+        "$BASE_SETTINGS_DIR/templates/CMakeLists.txt" > CMakeLists.txt
     echo "  生成: CMakeLists.txt"
 else
     echo "  跳过: CMakeLists.txt (已存在)"

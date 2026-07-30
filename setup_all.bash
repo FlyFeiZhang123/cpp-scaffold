@@ -17,7 +17,7 @@ elif [ -f /etc/apt/sources.list.d/ubuntu.sources ] && grep -q 'archive.ubuntu.co
 fi
 if $_mirror_warn; then
     echo "⚠️  检测到 apt 使用官方源，国内可能较慢"
-    echo "   换源: sudo ${BASE_SETTINGS_DIR}/setup_mirror.bash"
+    echo "   换源: sudo ${BASE_SETTINGS_DIR}/scripts/setup_mirror.bash"
     echo "   继续: 直接按 Enter"
     echo "   取消: Ctrl+C"
     read -r _ 2>/dev/null || true
@@ -26,15 +26,15 @@ fi
 export BASE_SETTINGS_DIR
 
 echo "→ 1/3 基础工具"
-"${BASE_SETTINGS_DIR}/basic_install.bash"
+"${BASE_SETTINGS_DIR}/scripts/basic_install.bash"
 echo ""
 
 echo "→ 2/3 Conan"
-"${BASE_SETTINGS_DIR}/conan_install.bash"
+"${BASE_SETTINGS_DIR}/scripts/conan_install.bash"
 echo ""
 
 echo "→ 3/3 perf + FlameGraph"
-"${BASE_SETTINGS_DIR}/perf_install.bash"
+"${BASE_SETTINGS_DIR}/scripts/perf_install.bash"
 echo ""
 
 echo "============================================"

@@ -147,7 +147,7 @@ CMAKE_ARGS=(
 # 仅当用户显式指定 --exe-src 时才传 cmake，否则由 cmake 缓存决定
 [ "$_EXPLICIT_EXE_SRC" = "1" ] && CMAKE_ARGS+=(-DEXECUTABLE_SRC="$EXECUTABLE_SRC")
 
-[ "$USE_CONAN" = "ON" ] && [ -f "${TOOLCHAIN_FILE:-}" ] && CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE")
+[ "$USE_CONAN" = "ON" ] && [ -f "${TOOLCHAIN_FILE:-}" ] && CMAKE_ARGS+=(-DCMAKE_TOOLCHAIN_FILE="$PWD/$TOOLCHAIN_FILE")
 
 cmake "${CMAKE_ARGS[@]}"
 
