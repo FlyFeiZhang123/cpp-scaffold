@@ -73,14 +73,7 @@ target_include_directories(${EXECUTABLE_NAME} PRIVATE include/)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE ${LIB_NAME} )
 # target_link_libraries(${EXECUTABLE_NAME} PRIVATE behaviortree_cpp::behaviortree_cpp)
 
-# 编译后在项目根目录创建 <可执行文件名> 软链接 → build/ 下实际二进制，IDE 调试始终指向最新产物
-add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove -f
-        "${CMAKE_SOURCE_DIR}/${EXECUTABLE_NAME}"
-    COMMAND ${CMAKE_COMMAND} -E create_symlink
-        "$<TARGET_FILE:${EXECUTABLE_NAME}>"
-        "${CMAKE_SOURCE_DIR}/${EXECUTABLE_NAME}"
-)
+# 软链接由 my_build.bash 在每次构建后自动更新：build/<可执行文件名> → 当前构建目录下的二进制
 
 # ===== 5. 编译选项 — 统一应用到库和可执行文件 =====
 # 用函数消除重复

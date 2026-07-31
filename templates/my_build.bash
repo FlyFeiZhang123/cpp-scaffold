@@ -70,10 +70,10 @@ for arg in "$@"; do
         --exe-src=*) EXECUTABLE_SRC="${arg#*=}"; _EXPLICIT_EXE_SRC=1 ;;
         --which|-w)
             EXECUTABLE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
-            if [ -L "${EXECUTABLE_NAME}" ]; then
-                echo "${EXECUTABLE_NAME} → $(readlink "${EXECUTABLE_NAME}")"
+            if [ -L "build/${EXECUTABLE_NAME}" ]; then
+                echo "build/${EXECUTABLE_NAME} → $(readlink "build/${EXECUTABLE_NAME}")"
             else
-                echo "${EXECUTABLE_NAME} 不存在（请先构建）"
+                echo "build/${EXECUTABLE_NAME} 不存在（请先构建）"
             fi
             exit 0
             ;;
@@ -157,9 +157,10 @@ else
     make -C "$BUILD_DIR" -j"$(nproc)"
 fi
 
-# ===== 更新根目录软链接（始终指向最新产物）=====
+# ===== 更新 build/ 下软链接（IDE 调试统一入口）=====
 EXE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
-ln -sfn "$BUILD_DIR/$EXE_NAME" "$EXE_NAME"
+mkdir -p build
+ln -sfn "$(realpath "${BUILD_DIR}/${EXE_NAME}")" "build/${EXE_NAME}"
 
 # ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then

@@ -149,6 +149,8 @@ valgrind --leak-check=full ./build/<EXECUTABLE_NAME>
 ```
 
 > **调试**：VS Code 中按 `F5` 即可，`launch.json` 已配置 `preLaunchTask` 自动编译。
+>
+> **首次调试注意**：第一次启动调试时，VS Code 会下载 C++ 调试符号（debug symbols），国内网络可能需要梯子，首次准备时间会较长（几分钟到十几分钟不等），后续调试不会重复下载。
 
 ---
 

@@ -33,8 +33,18 @@ echo "→ 2/3 Conan"
 "${BASE_SETTINGS_DIR}/scripts/conan_install.bash"
 echo ""
 
-echo "→ 3/3 perf + FlameGraph"
+echo "→ 3/4 perf + FlameGraph"
 "${BASE_SETTINGS_DIR}/scripts/perf_install.bash"
+echo ""
+
+echo "→ 4/4 doctest（离线测试框架）"
+if [ -d "${BASE_SETTINGS_DIR}/doctest-offline" ]; then
+    echo "doctest-offline 已存在，跳过"
+else
+    git clone --depth 1 git@github.com:doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline" 2>/dev/null || \
+    git clone --depth 1 https://github.com/doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline"
+    echo "doctest-offline → ${BASE_SETTINGS_DIR}/doctest-offline"
+fi
 echo ""
 
 echo "============================================"
