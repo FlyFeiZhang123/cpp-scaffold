@@ -151,8 +151,9 @@ CMAKE_ARGS=(
 cmake "${CMAKE_ARGS[@]}"
 
 # ===== 编译 =====
+# 默认使用 nproc 个线程，避免 ninja 默认 (nproc+2) 在低配设备上撑爆
 if [ "$BUILD_TOOL" = "ninja" ]; then
-    ninja -C "$BUILD_DIR"
+    ninja -C "$BUILD_DIR" -j"$(nproc)"
 else
     make -C "$BUILD_DIR" -j"$(nproc)"
 fi
