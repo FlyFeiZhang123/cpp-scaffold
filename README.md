@@ -25,7 +25,12 @@
 ### 1. 安装环境（只需一次）
 
 ```bash
-git clone https://gitee.com/flyzhang123/cpp-scaffold ~/cpp-scaffold
+# GitHub（主仓库）
+git clone git@github.com:FlyFeiZhang123/cpp-scaffold.git ~/cpp-scaffold
+
+# Gitee（国内镜像，速度快）
+git clone git@gitee.com:flyzhang123/cpp-scaffold.git ~/cpp-scaffold
+
 cd ~/cpp-scaffold
 
 # 国内网络先换源（阿里云 + 清华双源，自动适配 x86_64/ARM64,如果需要的话）
@@ -240,7 +245,7 @@ CMakeLists.txt 使用了 `CONFIGURE_DEPENDS` 自动检测，通常无需手动�
 
 **Q: 没有网络时如何编译测试？**
 
-将 doctest 源码放在 `~/cpp-scaffold/doctest-offline/` 下，CMake 自动使用本地缓存。
+项目生成时自动复制 `doctest-offline/` 到项目目录，CMake 本地优先；若不存在则从 GitHub 自动下载。
 
 **Q: 添加库目录后 clangd 不提示但编译正常？**
 
