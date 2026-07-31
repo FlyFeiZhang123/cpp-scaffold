@@ -6,6 +6,7 @@
 #   ./my_build.bash asan perf              # 显式开启
 #   ./my_build.bash tsan no-perf           # TSan + 关帧指针
 #   ./my_build.bash no-asan no-perf lto    # 纯 Release 无 sanitizer
+#   ./my_build.bash -j4                     # 限制并发编译数（树莓派推荐）
 #   ./my_build.bash --exe-src=other.cpp     # 切换编译目标（CMake缓存记录，后续无需再传）
 #   ./my_build.bash --exe-src=placeholder.cpp test
 #   ./my_build.bash no-march               # WSL2 用
@@ -28,6 +29,7 @@ Sanitizers:
 
 构建:
   release / debug        构建类型（默认 Debug）
+  -j<N>                  并发编译线程数（默认 $(nproc)，树莓派推荐 -j2）
   --exe-src=<file>       切换 example/ 下编译源文件，CMake 缓存自动持久化
   test                   编译后运行测试
   --which, -w            查看当前软链接指向哪个构建变体
@@ -49,6 +51,7 @@ USE_FOR_VALGRIND=OFF
 EXECUTABLE_SRC="main.cpp"     # 仅首次构建的默认值，之后由 CMake 缓存决定
 _EXPLICIT_EXE_SRC=0
 RUN_TESTS=OFF
+JOBS="${MY_BUILD_JOBS:-$(nproc)}"   # -jN 或环境变量覆盖
 
 # ===== 解析参数 =====
 for arg in "$@"; do
@@ -67,6 +70,7 @@ for arg in "$@"; do
         release)    BUILD_TYPE="Release" ;;
         debug)      BUILD_TYPE="Debug"   ;;
         test)       RUN_TESTS=ON       ;;
+        -j*)        JOBS="${arg#-j}"    ;;
         --exe-src=*) EXECUTABLE_SRC="${arg#*=}"; _EXPLICIT_EXE_SRC=1 ;;
         --which|-w)
             EXECUTABLE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
@@ -105,6 +109,7 @@ _info "Perf (fp)"    "$ENABLE_PERF"
 _info "march=native" "$USE_MARCH_NATIVE"
 _info "LTO"          "$ENABLE_LTO"
 _info "CCache"       "$(command -v ccache >/dev/null 2>&1 && echo 'enabled' || echo 'not installed')"
+_info "Jobs"         "$JOBS"
 _info "Exe src"      "example/$EXECUTABLE_SRC"
 echo ""
 # ===== Conan =====
@@ -151,11 +156,12 @@ CMAKE_ARGS=(
 cmake "${CMAKE_ARGS[@]}"
 
 # ===== 编译 =====
-# 默认使用 nproc 个线程，避免 ninja 默认 (nproc+2) 在低配设备上撑爆
+# 默认 nproc，可通过 -jN 覆盖（如 8 核 12 线程的机器 -j8 可能更快）
+JOBS="${MY_BUILD_JOBS:-$(nproc)}"
 if [ "$BUILD_TOOL" = "ninja" ]; then
-    ninja -C "$BUILD_DIR" -j"$(nproc)"
+    ninja -C "$BUILD_DIR" -j"${JOBS}"
 else
-    make -C "$BUILD_DIR" -j"$(nproc)"
+    make -C "$BUILD_DIR" -j"${JOBS}"
 fi
 
 # ===== 更新 build/ 下软链接（IDE 调试统一入口）=====
