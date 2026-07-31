@@ -25,6 +25,7 @@ if [ -d ~/FlameGraph ]; then
     echo "FlameGraph 已存在，跳过"
 else
     echo "克隆 FlameGraph..."
+    git clone --depth 1 git@github.com:brendangregg/FlameGraph.git ~/FlameGraph 2>/dev/null || \
     git clone --depth 1 https://github.com/brendangregg/FlameGraph.git ~/FlameGraph
     echo "FlameGraph → ~/FlameGraph"
 fi
