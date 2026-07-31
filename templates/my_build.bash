@@ -161,6 +161,7 @@ fi
 EXE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
 mkdir -p build
 ln -sfn "$(realpath "${BUILD_DIR}/${EXE_NAME}")" "build/${EXE_NAME}"
+ln -sfn "$(realpath "${BUILD_DIR}/compile_commands.json")" "build/compile_commands.json"
 
 # ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then
