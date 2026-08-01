@@ -33,17 +33,27 @@ echo "→ 2/3 Conan"
 "${BASE_SETTINGS_DIR}/scripts/conan_install.bash"
 echo ""
 
-echo "→ 3/4 perf + FlameGraph"
+echo "→ 3/5 perf + FlameGraph"
 "${BASE_SETTINGS_DIR}/scripts/perf_install.bash"
 echo ""
 
-echo "→ 4/4 doctest（离线测试框架）"
+echo "→ 4/5 doctest（离线测试框架）"
 if [ -d "${BASE_SETTINGS_DIR}/doctest-offline" ]; then
     echo "doctest-offline 已存在，跳过"
 else
     git clone --depth 1 git@github.com:doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline" 2>/dev/null || \
     git clone --depth 1 https://github.com/doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline"
     echo "doctest-offline → ${BASE_SETTINGS_DIR}/doctest-offline"
+fi
+echo ""
+
+echo "→ 5/5 Google Benchmark（离线性能测试）"
+if [ -d "${BASE_SETTINGS_DIR}/google-benchmark-offline" ]; then
+    echo "google-benchmark-offline 已存在，跳过"
+else
+    git clone --depth 1 --branch v1.9.4 https://gitee.com/mirrors/benchmark.git "${BASE_SETTINGS_DIR}/google-benchmark-offline" 2>/dev/null || \
+    git clone --depth 1 --branch v1.9.4 https://github.com/google/benchmark.git "${BASE_SETTINGS_DIR}/google-benchmark-offline"
+    echo "google-benchmark-offline → ${BASE_SETTINGS_DIR}/google-benchmark-offline"
 fi
 echo ""
 

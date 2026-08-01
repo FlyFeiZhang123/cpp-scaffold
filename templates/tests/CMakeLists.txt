@@ -1,3 +1,4 @@
+# ===== 单元测试 (doctest) =====
 # 本地优先，离线可用；否则从 GitHub 拉取
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
     set(DOCTEST_URL "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
@@ -14,18 +15,48 @@ FetchContent_Declare(
     GIT_TAG ${DOCTEST_TAG}
 )
 FetchContent_MakeAvailable(doctest)
-
-# 手动加载 doctest 的 CMake 辅助脚本 (提供 doctest_discover_tests)
 include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
 
-file(GLOB TEST_SOURCES "*.cpp")
+file(GLOB TEST_SOURCES "unit/*.cpp")
 
 add_executable(${PROJECT_NAME}_unit_test ${TEST_SOURCES})
-target_link_libraries(${PROJECT_NAME}_unit_test PRIVATE ${LIB_NAME})          # 不再链接 doctest
+target_link_libraries(${PROJECT_NAME}_unit_test PRIVATE ${LIB_NAME})
 target_include_directories(${PROJECT_NAME}_unit_test PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${doctest_SOURCE_DIR}   # 让 #include <doctest/doctest.h> 能找到
+    ${doctest_SOURCE_DIR}
 )
 
-enable_testing()                        # 既然顶层已经开启，这一行保留也无害
+enable_testing()
 doctest_discover_tests(${PROJECT_NAME}_unit_test)
+
+# ===== 性能基准测试 (Google Benchmark) =====
+option(BUILD_BENCHMARKS "Build benchmarks" ON)
+if(BUILD_BENCHMARKS)
+    # 本地优先，否则 GitHub
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
+        set(BENCH_URL "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
+    else()
+        set(BENCH_URL "https://github.com/google/benchmark.git")
+    endif()
+    FetchContent_Declare(
+        benchmark
+        GIT_REPOSITORY ${BENCH_URL}
+        GIT_TAG v1.9.4
+    )
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(benchmark)
+
+    file(GLOB BENCH_SOURCES "benchmark/*.cpp")
+
+    add_executable(${PROJECT_NAME}_benchmark ${BENCH_SOURCES})
+    target_link_libraries(${PROJECT_NAME}_benchmark PRIVATE ${LIB_NAME} benchmark::benchmark)
+    target_include_directories(${PROJECT_NAME}_benchmark PRIVATE
+        ${PROJECT_SOURCE_DIR}/include
+    )
+
+    # 注册到 CTest（CI 模式下限时快跑，手动跑不限时）
+    add_test(NAME ${PROJECT_NAME}_benchmark
+        COMMAND ${PROJECT_NAME}_benchmark
+            --benchmark_min_time=0.01
+    )
+endif()

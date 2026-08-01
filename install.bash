@@ -18,7 +18,7 @@ fi
 
 echo "项目: $PROJECT_NAME  可执行文件: $EXECUTABLE_NAME"
 
-mkdir -p include src tests third_party logs docs
+mkdir -p include src tests/unit tests/benchmark third_party logs docs
 
 # ---- 复制模板文件（跳过已存在的）----
 # 用法: copy_tpl <源> <目标> [<占位符> <替换值>]
@@ -48,13 +48,15 @@ done
 
 copy_tpl "$BASE_SETTINGS_DIR/templates/example"       "./example"
 copy_tpl "$BASE_SETTINGS_DIR/templates/Doxyfile"      "./Doxyfile"
-[ -d "$BASE_SETTINGS_DIR/doctest-offline" ] && copy_tpl "$BASE_SETTINGS_DIR/doctest-offline" "./doctest-offline"
+[ -d "$BASE_SETTINGS_DIR/doctest-offline" ]          && copy_tpl "$BASE_SETTINGS_DIR/doctest-offline"          "./doctest-offline"
+[ -d "$BASE_SETTINGS_DIR/google-benchmark-offline" ] && copy_tpl "$BASE_SETTINGS_DIR/google-benchmark-offline" "./google-benchmark-offline"
 copy_tpl "$BASE_SETTINGS_DIR/.gitignore"    "./.gitignore"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-format" "./.clang-format"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-tidy"   "./.clang-tidy"
 copy_tpl "$BASE_SETTINGS_DIR/README.md"     "./README.md"
 copy_tpl "$BASE_SETTINGS_DIR/templates/tests/CMakeLists.txt"  "tests/CMakeLists.txt"
-copy_tpl "$BASE_SETTINGS_DIR/templates/tests/test_main.cpp"   "tests/test_main.cpp"
+copy_tpl "$BASE_SETTINGS_DIR/templates/tests/unit/test_main.cpp"      "tests/unit/test_main.cpp"
+copy_tpl "$BASE_SETTINGS_DIR/templates/tests/benchmark/bench_main.cpp" "tests/benchmark/bench_main.cpp"
 
 # ---- 示例源码 ----
 copy_tpl "$BASE_SETTINGS_DIR/templates/include/calculator.h"  "include/calculator.h"

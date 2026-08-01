@@ -10,6 +10,7 @@
 *.profraw
 
 /doctest-offline/
+/google-benchmark-offline/
 
 #日志
 /logs/*
