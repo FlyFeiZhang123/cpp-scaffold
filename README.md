@@ -303,13 +303,19 @@ CMakeLists.txt 使用 `GLOB_RECURSE`，只有存在对应 .h 的 .cpp 才会被�
 
 使用 VS Code 调试需安装以下扩展：
 
-| 扩展                       | 必需 | 用途                     |
-| -------------------------- | :--: | ------------------------ |
-| clangd                       |  ✓   | 代码补全、跳转、格式化   |
-| CMake Tools                |  ✓   | CMake 集成、F5 调试      |
-| Log Viewer                 |      | `out/logs/*.log` 日志监控 |
+| 扩展 | ID | 必需 | 用途 |
+|------|------|:--:|------|
+| clangd | `llvm-vs-code-extensions.vscode-clangd` | ✓ | 代码补全、跳转、格式化 |
+| CMake Tools | `ms-vscode.cmake-tools` | ✓ | CMake 集成、F5 调试 |
+| C++ DevTools | `ms-vscode.cpp-devtools` | ★ | MS 官方 C++ 扩展，符号/性能分析 |
+| C++ Debug | `kylinideteam.cppdebug` | ★ | GDB 调试增强 |
+| TestMate C++ | `matepek.vscode-catch2-test-adapter` | ★ | 测试资源管理器（doctest/Catch2 通用） |
+| Doxygen | `cschlosser.doxdocgen` | | 自动生成 Doxygen 注释 |
+| Log Viewer | `berublan.vscode-log-viewer` | | `out/logs/*.log` 日志监控 |
 
-> 注意：装完 `vscode-clangd` 后建议禁用 VS Code 内置的 C++ 扩展，避免冲突。
+> ✓ 必需 ｜ ★ 强烈推荐 ｜ 无标记 = 可选
+>
+> 装完 `clangd` 后禁用 VS Code 内置 C++ 扩展（`ms-vscode.cpptools`），避免冲突。C++ DevTools 不冲突，可共存。
 
 ---
 
