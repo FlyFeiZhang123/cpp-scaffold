@@ -13,6 +13,7 @@
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
 | 代码格式化 | clang-format + clang-tidy | 模板自带                               |
 | 单元测试 | doctest                  | FetchContent 自动获取，支持离线缓存     |
+| 性能基准 | Google Benchmark         | `./my_build.bash -DBUILD_BENCHMARKS=ON` |
 | 内存检测 | ASan / TSan / UBSan      | 编译参数一键切换                        |
 | 内存泄漏 | Valgrind                 | 兼容 dwarf-4 调试信息                   |
 | 性能分析 | perf + FlameGraph        | 三种采样模式，一键生成火焰图            |
@@ -77,7 +78,10 @@ my_project/
 ├── src/
 ├── tests/
 │   ├── CMakeLists.txt
-│   └── test_main.cpp
+│   ├── unit/
+│   │   └── test_main.cpp      # doctest 单元测试
+│   └── benchmark/
+│       └── bench_main.cpp     # Google Benchmark 性能基准
 ├── example/
 │   └── main.cpp
 ├── .vscode/                 # VS Code 配置（选 v 时）
@@ -113,8 +117,13 @@ cd my_project
 # ThreadSanitizer
 ./my_build.bash tsan
 
-# 编译并运行测试
+# 编译并运行测试（含 unit test + benchmark）
 ./my_build.bash test
+
+# 只编译，跳过 benchmark（加速 CI / 低配机器）
+cmake -B build -DBUILD_BENCHMARKS=OFF .
+# 或直接运行 benchmark 查看性能
+./build/test_project_benchmark
 
 # WSL2 关闭 -march=native
 ./my_build.bash no-march
@@ -167,7 +176,7 @@ valgrind --leak-check=full ./build/<EXECUTABLE_NAME>
 | `valgrind`          | 生成 dwarf-4 调试信息（兼容 Valgrind） |
 | `release` / `debug` | 构建类型，默认 Debug                   |
 | `--exe-src=<file>`  | 指定 `example/` 下的入口源文件         |
-| `test`              | 编译后运行 ctest                       |
+| `test`              | 编译后运行 ctest（含 unit test + benchmark）|
 
 ---
 
