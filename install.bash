@@ -18,7 +18,7 @@ fi
 
 echo "项目: $PROJECT_NAME  可执行文件: $EXECUTABLE_NAME"
 
-mkdir -p include src tests/unit tests/benchmark third_party logs docs
+mkdir -p include src tests/unit tests/benchmark third_party out/logs docs
 
 # ---- 复制模板文件（跳过已存在的）----
 # 用法: copy_tpl <源> <目标> [<占位符> <替换值>]
@@ -41,7 +41,7 @@ copy_tpl() {
 }
 
 # ---- 通用模板文件 ----
-for f in my_build.bash perf_use.bash; do
+for f in my_build.bash perf_use.bash bench_use.bash; do
     copy_tpl "$BASE_SETTINGS_DIR/templates/$f" "./$f"
 done
 [ "$CONAN_FLAG" = "y" ] && copy_tpl "$BASE_SETTINGS_DIR/templates/conanfile.txt" "./conanfile.txt"
@@ -75,13 +75,11 @@ fi
 # ---- 编辑器配置 ----
 if [ "$EDITOR" = "z" ]; then
     mkdir -p .zed
-    copy_tpl "$BASE_SETTINGS_DIR/.zed/debug.json" ".zed/debug.json" \
-        "__EXECUTABLE_NAME__" "$EXECUTABLE_NAME"
+    copy_tpl "$BASE_SETTINGS_DIR/.zed/debug.json" ".zed/debug.json"
 
 elif [ "$EDITOR" = "v" ]; then
     mkdir -p .vscode
-    copy_tpl "$BASE_SETTINGS_DIR/.vscode/launch.json" ".vscode/launch.json" \
-        "__EXECUTABLE_NAME__" "$EXECUTABLE_NAME"
+    copy_tpl "$BASE_SETTINGS_DIR/.vscode/launch.json" ".vscode/launch.json"
     for f in settings.json tasks.json sudo_gdb.sh cpp.code-snippets; do
         copy_tpl "$BASE_SETTINGS_DIR/.vscode/$f" ".vscode/$f"
     done

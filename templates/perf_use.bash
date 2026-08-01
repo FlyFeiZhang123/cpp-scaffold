@@ -7,7 +7,7 @@ set -eo pipefail
 # ── 默认值 ──
 DURATION=30
 FREQ=99
-OUT_DIR="perf"
+OUT_DIR="out/perf"
 
 # ── 帮助 ──
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -78,8 +78,9 @@ fi
 #  采样模式
 # ═══════════════════════════════════════════════════════════
 
-[ -z "$PROG" ]   && echo "错误: 请指定程序" && exit 1
-[ ! -x "$PROG" ] && echo "错误: $PROG 不可执行" && exit 1
+# 未指定程序时默认用 build/app
+[ -z "$PROG" ] && PROG="build/app"
+[ ! -x "$PROG" ] && echo "错误: $PROG 不可执行，请先编译: ./my_build.bash" && exit 1
 
 REAL_HOME="$(eval echo ~"${SUDO_USER:-$USER}")"
 FLAME_DIR="${REAL_HOME}/FlameGraph"

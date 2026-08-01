@@ -73,11 +73,10 @@ for arg in "$@"; do
         -j*)        JOBS="${arg#-j}"    ;;
         --exe-src=*) EXECUTABLE_SRC="${arg#*=}"; _EXPLICIT_EXE_SRC=1 ;;
         --which|-w)
-            EXECUTABLE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
-            if [ -L "build/${EXECUTABLE_NAME}" ]; then
-                echo "build/${EXECUTABLE_NAME} → $(readlink "build/${EXECUTABLE_NAME}")"
+            if [ -L "build/app" ]; then
+                echo "build/app → $(readlink "build/app")"
             else
-                echo "build/${EXECUTABLE_NAME} 不存在（请先构建）"
+                echo "build/app 不存在（请先构建）"
             fi
             exit 0
             ;;
@@ -166,9 +165,14 @@ fi
 
 # ===== 更新 build/ 下软链接（IDE 调试统一入口）=====
 EXE_NAME=$(sed -n 's/^set(EXECUTABLE_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
+PROJ_NAME=$(sed -n 's/^set(PROJECT_NAME \([^)]*\).*/\1/p' CMakeLists.txt | head -1)
 mkdir -p build
-ln -sfn "$(realpath "${BUILD_DIR}/${EXE_NAME}")" "build/${EXE_NAME}"
+ln -sfn "$(realpath "${BUILD_DIR}/${EXE_NAME}")" "build/app"
 ln -sfn "$(realpath "${BUILD_DIR}/compile_commands.json")" "build/compile_commands.json"
+
+# 单元测试 & benchmark 软链接（若已编译）
+[ -x "${BUILD_DIR}/${PROJ_NAME}_unit_test" ]  && ln -sfn "$(realpath "${BUILD_DIR}/${PROJ_NAME}_unit_test")"  "build/test"
+[ -x "${BUILD_DIR}/${PROJ_NAME}_benchmark" ]  && ln -sfn "$(realpath "${BUILD_DIR}/${PROJ_NAME}_benchmark")"  "build/bench"
 
 # ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then

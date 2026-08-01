@@ -62,18 +62,33 @@ echo "  全部安装完成"
 echo "============================================"
 echo ""
 
-# ---- 配置 ~/.bashrc（只写一次，不重复）----
+# ---- 配置 ~/.bashrc（只写一次，不重复；升级时补写补全）----
 if ! grep -q "BASE_SETTINGS_DIR" ~/.bashrc 2>/dev/null; then
     cat >> ~/.bashrc << BASHRC_EOF
 
 # cpp-scaffold
 export BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR}"
 alias newproj='\$BASE_SETTINGS_DIR/install.bash'
+
+# tab 补全
+for f in "\$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
+    [ -f "\$f" ] && source "\$f"
+done
 BASHRC_EOF
-    echo "✅ 已配置 ~/.bashrc（BASE_SETTINGS_DIR + newproj 别名）"
+    echo "✅ 已配置 ~/.bashrc（BASE_SETTINGS_DIR + newproj 别名 + tab 补全）"
     echo "   执行 source ~/.bashrc 后生效"
 else
-    echo "~/.bashrc 已配置，跳过"
+    echo "~/.bashrc 已有基础配置，跳过"
+    if ! grep -q "completions" ~/.bashrc 2>/dev/null; then
+        cat >> ~/.bashrc << BASHRC_EOF
+
+# cpp-scaffold tab 补全
+for f in "\$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
+    [ -f "\$f" ] && source "\$f"
+done
+BASHRC_EOF
+        echo "   ↳ 已补写 tab 补全配置"
+    fi
 fi
 
 echo ""

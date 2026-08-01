@@ -8,7 +8,8 @@ sudo apt install -y \
     clangd clang-format \
     valgrind \
     doxygen graphviz \
-    ccache
+    ccache \
+    libpfm4-dev
 
 # 限制 ccache 缓存大小（默认 5GB 无上限，避免撑满磁盘）
 ccache --max-size=10G

@@ -2,8 +2,8 @@
 /build/
 /build-*/
 
-# 性能分析输出
-/perf/
+# 输出文件（perf / benchmark / logs）
+/out/
 
 # 工具缓存
 /.cache/
@@ -11,9 +11,6 @@
 
 /doctest-offline/
 /google-benchmark-offline/
-
-#日志
-/logs/*
 
 # CMake 生成的文件（如果落在源码树里）
 CMakeUserPresets.json

@@ -1,11 +1,11 @@
 [
   {
-    "label": "Debug __EXECUTABLE_NAME__ (GDB)", // "build": {
+    "label": "Debug app (GDB)", // "build": {
     //   "command": "make",
     //   "args": ["-j8"],
     //   "cwd": "$ZED_WORKTREE_ROOT"
     // },
-    "program": "$ZED_WORKTREE_ROOT/build/__EXECUTABLE_NAME__",
+    "program": "$ZED_WORKTREE_ROOT/build/app",
     "request": "launch",
     "adapter": "GDB",
     "cwd": "$ZED_WORKTREE_ROOT",

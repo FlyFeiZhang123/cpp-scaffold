@@ -11,9 +11,10 @@
 | 构建系统 | CMake 3.20+ + Ninja/Make | 支持 Debug / Release / Sanitizer 多配置 |
 | 包管理   | Conan 2.x                | 可选，通过 `conanfile.txt` 开启         |
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
+| Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash` 原生补全 |
 | 代码格式化 | clang-format + clang-tidy | 模板自带                               |
 | 单元测试 | doctest                  | FetchContent 自动获取，支持离线缓存     |
-| 性能基准 | Google Benchmark         | `./my_build.bash -DBUILD_BENCHMARKS=ON` |
+| 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
 | 内存检测 | ASan / TSan / UBSan      | 编译参数一键切换                        |
 | 内存泄漏 | Valgrind                 | 兼容 dwarf-4 调试信息                   |
 | 性能分析 | perf + FlameGraph        | 三种采样模式，一键生成火焰图            |
@@ -50,9 +51,14 @@ sudo ./scripts/setup_mirror.bash
 ```bash
 export BASE_SETTINGS_DIR="$HOME/cpp-scaffold"
 alias newproj='$BASE_SETTINGS_DIR/install.bash'
+
+# tab 补全（my_build.bash / bench_use.bash / perf_use.bash）
+for f in "$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
+    [ -f "$f" ] && source "$f"
+done
 ```
 
-新终端或 `source ~/.bashrc` 后即可使用 `newproj` 命令。
+新终端或 `source ~/.bashrc` 后即可使用 `newproj` 命令和 tab 补全。
 
 ### 3. 创建新项目
 
@@ -84,16 +90,21 @@ my_project/
 │       └── bench_main.cpp     # Google Benchmark 性能基准
 ├── example/
 │   └── main.cpp
-├── .vscode/                 # VS Code 配置（选 v 时）
-│   ├── launch.json          #   调试配置（普通 + sudo 两种）
-│   ├── settings.json        #   clangd + CMake 配置
-│   ├── tasks.json           #   F5 自动编译
-│   └── sudo_gdb.sh          #   root 权限调试
-├── .zed/                    # Zed 配置（选 z 时）
+├── out/                      # 输出文件（perf / benchmark / logs）
+│   ├── perf/
+│   ├── bench/
+│   └── logs/
+├── .vscode/                  # VS Code 配置（选 v 时）
+│   ├── launch.json           #   调试配置（普通 + sudo 两种）
+│   ├── settings.json         #   clangd + CMake 配置
+│   ├── tasks.json            #   F5 自动编译
+│   └── sudo_gdb.sh           #   root 权限调试
+├── .zed/                     # Zed 配置（选 z 时）
 │   └── debug.json
-├── my_build.bash            # 构建脚本
-├── perf_use.bash            # 性能分析脚本
-└── Doxyfile                 # 文档配置
+├── my_build.bash             # 构建脚本
+├── perf_use.bash             # 性能分析脚本
+├── bench_use.bash            # Benchmark 脚本
+└── Doxyfile                  # 文档配置
 ```
 
 > 库名自动跟随项目名，例如 `my_project_lib`。
@@ -120,10 +131,9 @@ cd my_project
 # 编译并运行测试（含 unit test + benchmark）
 ./my_build.bash test
 
-# 只编译，跳过 benchmark（加速 CI / 低配机器）
+# 跳过 benchmark（加速 CI / 低配机器）
 cmake -B build -DBUILD_BENCHMARKS=OFF .
-# 或直接运行 benchmark 查看性能
-./build/test_project_benchmark
+./my_build.bash
 
 # WSL2 关闭 -march=native
 ./my_build.bash no-march
@@ -138,26 +148,42 @@ cmake -B build -DBUILD_BENCHMARKS=OFF .
 ### 5. 运行与调试
 
 ```bash
-# 运行
-./build/<EXECUTABLE_NAME>
+# 运行（build/app 为固定软链接，指向当前构建变体）
+./build/app
 
 # Valgrind 检测内存泄漏
-valgrind --leak-check=full ./build/<EXECUTABLE_NAME>
+valgrind --leak-check=full ./build/app
 
-# 性能采样（默认 wrap 模式，程序结束自动停）
-./perf_use.bash ./build/<EXECUTABLE_NAME>
+# ── Benchmark ──
+# 表格输出 + PMU 计数器（cache miss / cycles / branch miss）
+./bench_use.bash
 
-# 采样 30 秒（适合长期运行的程序）
-./perf_use.bash ./build/<EXECUTABLE_NAME> -t 30
+# 绑核 + 过滤
+./bench_use.bash --bind 0 --filter add
+
+# 导出 JSON 并对比
+./bench_use.bash --json --out out/bench/v1.json
+./bench_use.bash --compare out/bench/v1.json out/bench/v2.json
+
+# ── 性能采样 ──
+# 默认采样 build/app，wrap 模式（程序结束自动停）
+./perf_use.bash
+
+# 指定程序 + 采样 30 秒（适合长期运行的程序）
+./perf_use.bash ./build/app -t 30
 
 # 手动按 Enter 停止（适合交互调试）
-./perf_use.bash ./build/<EXECUTABLE_NAME> -m
+./perf_use.bash -m
 
 # 浏览器查看火焰图
 ./perf_use.bash --serve
 ```
 
-> **调试**：VS Code 中按 `F5` 即可，`launch.json` 已配置 `preLaunchTask` 自动编译。
+> **调试**：VS Code 中按 `F5` 即可，`launch.json` 已配置 `preLaunchTask` 自动编译。`build/app` 软链接由 `my_build.bash` 每次构建后自动更新，指向当前构建变体，调试始终正确。
+>
+> **Tab 补全**：所有脚本都支持 bash 原生 tab 补全（零依赖）。`--exe-src` 自动补 `=` 并补全 `example/*.cpp`，`--out` 自动补全 `out/bench/*.json`。`source ~/.bashrc` 后生效。
+>
+> **PMU 计数器**：`bench_use.bash` 默认读取 CPU 硬件计数器。若 `kernel.perf_event_paranoid > 2`（Ubuntu 24.04+ 默认），计数器列将显示 0。运行 `sudo sysctl kernel.perf_event_paranoid=2` 修复。
 >
 > **首次调试注意**：第一次启动调试时，VS Code 会下载 C++ 调试符号（debug symbols），国内网络可能需要梯子，首次准备时间会较长（几分钟到十几分钟不等），后续调试不会重复下载。
 
@@ -177,6 +203,7 @@ valgrind --leak-check=full ./build/<EXECUTABLE_NAME>
 | `release` / `debug` | 构建类型，默认 Debug                   |
 | `--exe-src=<file>`  | 指定 `example/` 下的入口源文件         |
 | `test`              | 编译后运行 ctest（含 unit test + benchmark）|
+| `-j<N>`             | 并发编译线程数（默认 `nproc`）            |
 
 ---
 
@@ -194,9 +221,11 @@ cpp-scaffold/
 │   ├── conanfile.txt
 │   ├── my_build.bash        #   构建脚本
 │   ├── perf_use.bash        #   性能分析
+│   ├── bench_use.bash       #   Benchmark 脚本
 │   ├── Doxyfile
 │   ├── example/
-│   └── tests/
+│   ├── tests/
+│   └── completions/         #   bash 补全（全局 source，不复制到项目）
 ├── .vscode/                 # VS Code 配置模板
 │   ├── launch.json
 │   ├── settings.json
@@ -247,7 +276,7 @@ sudo sh -c 'echo -1 > /proc/sys/kernel/perf_event_paranoid'
 TSan 需要大块连续虚拟内存，和系统的 ASLR（地址随机化）冲突。运行时关闭 ASLR：
 
 ```bash
-setarch $(uname -m) -R ./build/<EXECUTABLE_NAME>
+setarch $(uname -m) -R ./build/app
 ```
 
 **Q: 新增/删除了 src/ 下的源文件，编译没生效？**
@@ -278,7 +307,7 @@ CMakeLists.txt 使用 `GLOB_RECURSE`，只有存在对应 .h 的 .cpp 才会被�
 | -------------------------- | :--: | ------------------------ |
 | clangd                       |  ✓   | 代码补全、跳转、格式化   |
 | CMake Tools                |  ✓   | CMake 集成、F5 调试      |
-| Log Viewer                 |      | `logs/*.log` 日志监控    |
+| Log Viewer                 |      | `out/logs/*.log` 日志监控 |
 
 > 注意：装完 `vscode-clangd` 后建议禁用 VS Code 内置的 C++ 扩展，避免冲突。
 

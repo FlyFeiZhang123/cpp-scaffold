@@ -44,6 +44,7 @@ if(BUILD_BENCHMARKS)
         GIT_TAG v1.9.4
     )
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    set(BENCHMARK_ENABLE_LIBPFM ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(benchmark)
 
     file(GLOB BENCH_SOURCES "benchmark/*.cpp")
@@ -55,8 +56,12 @@ if(BUILD_BENCHMARKS)
     )
 
     # 注册到 CTest（CI 模式下限时快跑，手动跑不限时）
+    # PMU 硬件计数器：CACHE-MISSES / CACHE-REFERENCES / CYCLES / BRANCH-MISSES
+    # 需要依赖 libpfm4-dev，若未安装会输出警告（不影响 benchmark 运行）
     add_test(NAME ${PROJECT_NAME}_benchmark
         COMMAND ${PROJECT_NAME}_benchmark
             --benchmark_min_time=0.01
+            --benchmark_perf_counters=CACHE-MISSES,CACHE-REFERENCES,CYCLES,BRANCH-MISSES
+            --benchmark_counters_tabular=true
     )
 endif()
