@@ -60,8 +60,8 @@ endif()
 #   target_link_libraries(${LIB_NAME} PRIVATE muduo_net muduo_base)
 #   target_include_directories(${LIB_NAME} PUBLIC third_party/muduo/include)
 #
-# 方式三：FetchContent — 自动下载 + add_subdirectory，统一写在 cmake/Dependencies.cmake
-include(cmake/Dependencies.cmake)
+# 方式三：FetchContent — 自动下载 + add_subdirectory，统一写在 cmake/Dependencies.cmake,如果写过的就不用再find_package了
+# include(cmake/Dependencies.cmake) 
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp") #从这里触发增量管理，不需要重新编译了，大多数时候效率更高
 

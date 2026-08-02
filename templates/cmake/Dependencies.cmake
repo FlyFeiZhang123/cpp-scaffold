@@ -10,13 +10,13 @@ set(FETCHCONTENT_BINARY_DIR "${CMAKE_BINARY_DIR}/_deps")                # 构建
 # 模板：
 # find_package(xxx QUIET)
 # if(NOT xxx_FOUND)
-#     if(EXISTS "${THIRD_PARTY_DIR}/xxx")
+#     if(EXISTS "${THIRD_PARTY_DIR}/xxx")                       #xxx项目名
 #         add_subdirectory(${THIRD_PARTY_DIR}/xxx xxx-build)
 #     else()
 #         FetchContent_Declare(
 #             xxx
 #             GIT_REPOSITORY https://github.com/...
-#             GIT_TAG v1.2.3
+#             GIT_TAG 1.2.3                                     #版本号
 #             SOURCE_DIR ${THIRD_PARTY_DIR}/xxx
 #             BINARY_DIR ${FETCHCONTENT_BINARY_DIR}/xxx-build
 #         )
