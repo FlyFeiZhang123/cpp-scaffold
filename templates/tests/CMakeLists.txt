@@ -45,6 +45,7 @@ if(BUILD_BENCHMARKS)
     )
     set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
     set(BENCHMARK_ENABLE_LIBPFM ON CACHE BOOL "" FORCE)
+    set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(benchmark)
 
     file(GLOB BENCH_SOURCES "benchmark/*.cpp")
