@@ -18,7 +18,7 @@ fi
 
 echo "项目: $PROJECT_NAME  可执行文件: $EXECUTABLE_NAME"
 
-mkdir -p include src tests/unit tests/benchmark out/logs docs
+mkdir -p include src tests/unit tests/benchmark third_party out/logs docs
 
 # ---- 复制模板文件（跳过已存在的）----
 # 用法: copy_tpl <源> <目标> [<占位符> <替换值>]
@@ -44,6 +44,7 @@ copy_tpl() {
 for f in my_build.bash perf_use.bash bench_use.bash; do
     copy_tpl "$BASE_SETTINGS_DIR/templates/$f" "./$f"
 done
+copy_tpl "$BASE_SETTINGS_DIR/templates/cmake" "./cmake"
 [ "$CONAN_FLAG" = "y" ] && copy_tpl "$BASE_SETTINGS_DIR/templates/conanfile.txt" "./conanfile.txt"
 
 copy_tpl "$BASE_SETTINGS_DIR/templates/example"       "./example"

@@ -10,6 +10,7 @@
 | -------- | ------------------------ | --------------------------------------- |
 | 构建系统 | CMake 3.20+ + Ninja/Make | 支持 Debug / Release / Sanitizer 多配置 |
 | 包管理   | Conan 2.x                | 可选，通过 `conanfile.txt` 开启         |
+| 依赖管理 | cmake/Dependencies.cmake  | find_package → vendor → FetchContent 三级降级 |
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
 | Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash` 原生补全 |
 | 代码格式化 | clang-format + clang-tidy | 模板自带                               |
@@ -223,6 +224,8 @@ cpp-scaffold/
 │   ├── my_build.bash        #   构建脚本
 │   ├── perf_use.bash        #   性能分析
 │   ├── bench_use.bash       #   Benchmark 脚本
+│   ├── cmake/
+│   │   └── Dependencies.cmake #   依赖声明（三级降级链）
 │   ├── Doxyfile
 │   ├── example/
 │   ├── tests/

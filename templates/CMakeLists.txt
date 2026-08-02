@@ -45,17 +45,23 @@ if(ENABLE_CCACHE)
   endif()
 endif()
 
-# ===== 2. 依赖 =====
-# set(MY_BT_WS_ROOT "/root/my_behavior_tree")
-# list(APPEND CMAKE_PREFIX_PATH "${MY_BT_WS_ROOT}/install")
-# find_package(behaviortree_cpp REQUIRED)
-
-# git submodule add xxx ./third_party/muduo    # 命令行上执行,看菜鸟，我这里把放置位置写道/third_party/muduo下，具体可以自己改
-# add_subdirectory(third_party/muduo muduo_build) #这里把编译好的放入/build(这个是看你的编译目录名)/mduo_build
-# add_library(Muduo::Base ALIAS muduo_base) #为了防冲突，可以做一个别名，不过一般不用
-# target_link_libraries(${LIB_NAME} muduo_net muduo_base) #具体库自己选,正常第三方（非conan2集成）库就这么多步骤
-# target_include_directories(${LIB_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/third_party/muduo/include)
-# muduo这个库比较老，光target_libraries不够，还需要这个，但是现在比较规范的一般不需要这个，具体看具体库的CMakeLists.txt规则
+# ===== 2. 依赖（三种获取方式） =====
+#
+# 方式一：find_package — 库已编译安装（系统 apt / Conan / 手动 install）
+#   find_package(fmt REQUIRED)
+#   target_link_libraries(${LIB_NAME} PRIVATE fmt::fmt)
+#
+#   如果库装在非标准路径（如自己编的放在 /root/xxx/install）：
+#     list(APPEND CMAKE_PREFIX_PATH "/root/xxx/install")
+#     find_package(behaviortree_cpp REQUIRED)
+#
+# 方式二：add_subdirectory — 源码在本地（git submodule / vendor）
+#   add_subdirectory(third_party/muduo muduo_build)
+#   target_link_libraries(${LIB_NAME} PRIVATE muduo_net muduo_base)
+#   target_include_directories(${LIB_NAME} PUBLIC third_party/muduo/include)
+#
+# 方式三：FetchContent — 自动下载 + add_subdirectory，统一写在 cmake/Dependencies.cmake
+include(cmake/Dependencies.cmake)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp") #从这里触发增量管理，不需要重新编译了，大多数时候效率更高
 
