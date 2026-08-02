@@ -25,11 +25,11 @@ fi
 
 export BASE_SETTINGS_DIR
 
-echo "→ 1/3 基础工具"
+echo "→ 1/5 基础工具"
 "${BASE_SETTINGS_DIR}/scripts/basic_install.bash"
 echo ""
 
-echo "→ 2/3 Conan"
+echo "→ 2/5 Conan"
 "${BASE_SETTINGS_DIR}/scripts/conan_install.bash"
 echo ""
 

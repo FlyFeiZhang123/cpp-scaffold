@@ -29,7 +29,7 @@
   "logViewer.watch": [
     {
       "title": "Test Logs",
-      "pattern": "logs/**/*.log"
+      "pattern": "out/logs/**/*.log"
     }
   ]
 }

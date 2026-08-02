@@ -87,7 +87,8 @@ my_project/
 │   ├── unit/
 │   │   └── test_main.cpp      # doctest 单元测试
 │   └── benchmark/
-│       └── bench_main.cpp     # Google Benchmark 性能基准
+│       ├── bench_main.cpp     # Google Benchmark 性能基准
+│       └── pin_thread.h       # 绑核工具
 ├── example/
 │   └── main.cpp
 ├── out/                      # 输出文件（perf / benchmark / logs）
@@ -225,6 +226,13 @@ cpp-scaffold/
 │   ├── Doxyfile
 │   ├── example/
 │   ├── tests/
+│   │   ├── CMakeLists.txt
+│   │   ├── unit/test_main.cpp     #   doctest 单元测试
+│   │   └── benchmark/
+│   │       ├── bench_main.cpp       #   Google Benchmark
+│   │       └── pin_thread.h         #   绑核工具
+│   ├── include/calculator.h
+│   ├── src/calculator.cpp
 │   └── completions/         #   bash 补全（全局 source，不复制到项目）
 ├── .vscode/                 # VS Code 配置模板
 │   ├── launch.json

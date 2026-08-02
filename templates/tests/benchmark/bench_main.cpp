@@ -42,6 +42,29 @@
 //   - AoS → SoA：热字段分离到独立连续数组
 //   - 避免 std::list / std::map 等跳跃式结构
 // ============================================================================
+//
+// ============================================================================
+// CPU 绑核 — 让 benchmark 数据可复现
+// ============================================================================
+//
+// 运行时绑核（推荐，不改代码）：
+//   taskset -c 0 ./build/test_benchmark           # 绑到物理核 0
+//   ./bench_use.bash --bind 0                      # 同上，脚本封装
+//
+// 代码级绑核（在 fixture SetUp 中调用）：
+//   class MyBench : public benchmark::Fixture {
+//    public:
+//     void SetUp(const benchmark::State&) override { pin_to_core(0); }
+//   };
+//   BENCHMARK_DEFINE_F(MyBench, my_test)(benchmark::State& st) { ... }
+//   BENCHMARK_REGISTER_F(MyBench, my_test);
+//
+// 注意：绑 0, 2, 4... 隔开的物理核，避免绑到超线程对（0&1 共享执行单元）
+// ============================================================================
+//
+// pin_thread.h 用法：
+//   #include "pin_thread.h"
+//   pin_to_core(0);  // 绑到物理核 0
 
 // ── Calculator benchmarks ──
 static void bm_calculator_add(benchmark::State& state) {
