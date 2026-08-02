@@ -9,7 +9,8 @@
 /.cache/
 *.profraw
 
-# third_party 由 setup_all.bash 下载，不进版本库
+/doctest-offline/
+/google-benchmark-offline/
 /third_party/
 
 # CMake 生成的文件（如果落在源码树里）

@@ -48,7 +48,8 @@ done
 
 copy_tpl "$BASE_SETTINGS_DIR/templates/example"       "./example"
 copy_tpl "$BASE_SETTINGS_DIR/templates/Doxyfile"      "./Doxyfile"
-[ -d "$BASE_SETTINGS_DIR/third_party" ] && copy_tpl "$BASE_SETTINGS_DIR/third_party" "./third_party"
+[ -d "$BASE_SETTINGS_DIR/doctest-offline" ]          && copy_tpl "$BASE_SETTINGS_DIR/doctest-offline"          "./doctest-offline"
+[ -d "$BASE_SETTINGS_DIR/google-benchmark-offline" ] && copy_tpl "$BASE_SETTINGS_DIR/google-benchmark-offline" "./google-benchmark-offline"
 copy_tpl "$BASE_SETTINGS_DIR/.gitignore"    "./.gitignore"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-format" "./.clang-format"
 copy_tpl "$BASE_SETTINGS_DIR/.clang-tidy"   "./.clang-tidy"

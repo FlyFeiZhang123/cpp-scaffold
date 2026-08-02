@@ -3,8 +3,8 @@
 include(FetchContent)
 
 # ===== 单元测试 (doctest) =====
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/doctest")
-    set(doctest_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/doctest")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
+    set(doctest_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
     add_subdirectory(${doctest_SOURCE_DIR} "${CMAKE_BINARY_DIR}/_deps/doctest")
 else()
     FetchContent_Declare(
@@ -31,8 +31,8 @@ doctest_discover_tests(${PROJECT_NAME}_unit_test)
 # ===== 性能基准测试 (Google Benchmark) =====
 option(BUILD_BENCHMARKS "Build benchmarks" ON)
 if(BUILD_BENCHMARKS)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/google-benchmark")
-        set(benchmark_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/google-benchmark")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
+        set(benchmark_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
         set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
         set(BENCHMARK_ENABLE_LIBPFM ON CACHE BOOL "" FORCE)
         set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
