@@ -293,7 +293,7 @@ CMakeLists.txt 使用了 `CONFIGURE_DEPENDS` 自动检测，通常无需手动�
 
 **Q: 没有网络时如何编译测试？**
 
-项目生成时自动复制 `doctest-offline/` 到项目目录，CMake 本地优先；若不存在则从 GitHub 自动下载。
+项目生成时自动复制 `third_party/` 到项目目录，CMake 本地优先；若不存在则从 GitHub 自动下载。
 
 **Q: 添加库目录后 clangd 不提示但编译正常？**
 

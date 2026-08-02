@@ -38,22 +38,24 @@ echo "→ 3/5 perf + FlameGraph"
 echo ""
 
 echo "→ 4/5 doctest（离线测试框架）"
-if [ -d "${BASE_SETTINGS_DIR}/doctest-offline" ]; then
-    echo "doctest-offline 已存在，跳过"
+THIRD="${BASE_SETTINGS_DIR}/third_party"
+mkdir -p "$THIRD"
+if [ -d "${THIRD}/doctest" ]; then
+    echo "third_party/doctest 已存在，跳过"
 else
-    git clone --depth 1 git@github.com:doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline" 2>/dev/null || \
-    git clone --depth 1 https://github.com/doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline"
-    echo "doctest-offline → ${BASE_SETTINGS_DIR}/doctest-offline"
+    git clone --depth 1 git@github.com:doctest/doctest.git "${THIRD}/doctest" 2>/dev/null || \
+    git clone --depth 1 https://github.com/doctest/doctest.git "${THIRD}/doctest"
+    echo "doctest → ${THIRD}/doctest"
 fi
 echo ""
 
 echo "→ 5/5 Google Benchmark（离线性能测试）"
-if [ -d "${BASE_SETTINGS_DIR}/google-benchmark-offline" ]; then
-    echo "google-benchmark-offline 已存在，跳过"
+if [ -d "${THIRD}/google-benchmark" ]; then
+    echo "third_party/google-benchmark 已存在，跳过"
 else
-    git clone --depth 1 --branch v1.9.4 https://gitee.com/mirrors/benchmark.git "${BASE_SETTINGS_DIR}/google-benchmark-offline" 2>/dev/null || \
-    git clone --depth 1 --branch v1.9.4 https://github.com/google/benchmark.git "${BASE_SETTINGS_DIR}/google-benchmark-offline"
-    echo "google-benchmark-offline → ${BASE_SETTINGS_DIR}/google-benchmark-offline"
+    git clone --depth 1 --branch v1.9.4 https://gitee.com/mirrors/benchmark.git "${THIRD}/google-benchmark" 2>/dev/null || \
+    git clone --depth 1 --branch v1.9.4 https://github.com/google/benchmark.git "${THIRD}/google-benchmark"
+    echo "google-benchmark → ${THIRD}/google-benchmark"
 fi
 echo ""
 

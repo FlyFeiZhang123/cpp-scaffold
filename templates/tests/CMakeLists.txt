@@ -1,7 +1,7 @@
 # ===== 单元测试 (doctest) =====
 # 本地优先，离线可用；否则从 GitHub 拉取
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
-    set(DOCTEST_URL "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/doctest")
+    set(DOCTEST_URL "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/doctest")
     set(DOCTEST_TAG "")
 else()
     set(DOCTEST_URL "https://github.com/doctest/doctest.git")
@@ -33,8 +33,8 @@ doctest_discover_tests(${PROJECT_NAME}_unit_test)
 option(BUILD_BENCHMARKS "Build benchmarks" ON)
 if(BUILD_BENCHMARKS)
     # 本地优先，否则 GitHub
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
-        set(BENCH_URL "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/google-benchmark")
+        set(BENCH_URL "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/google-benchmark")
     else()
         set(BENCH_URL "https://github.com/google/benchmark.git")
     endif()
