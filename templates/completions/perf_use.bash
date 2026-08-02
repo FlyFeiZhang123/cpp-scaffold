@@ -13,9 +13,11 @@ _perf_use() {
 
     if [[ "$already" =~ --serve ]]; then
         COMPREPLY=($(compgen -W "--port= -d --dir -h --help" -- "$cur"))
+        [[ "${COMPREPLY[0]}" == --port= ]] && compopt -o nospace 2>/dev/null
         return
     fi
 
     COMPREPLY=($(compgen -W "--serve --time --manual --wrap --dir --freq --port= --help -t -m -w -d -f -h" -- "$cur"))
+    [[ "${COMPREPLY[0]}" == --port= ]] && compopt -o nospace 2>/dev/null
 }
 complete -F _perf_use perf_use.bash ./perf_use.bash
