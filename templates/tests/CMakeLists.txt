@@ -1,5 +1,5 @@
 # ===== 依赖获取策略 =====
-# vendor (third_party/) 直接 add_subdirectory；否则 FetchContent (GitHub)
+# 根目录 -offline 离线副本优先；否则 FetchContent (GitHub)
 include(FetchContent)
 
 # ===== 单元测试 (doctest) =====

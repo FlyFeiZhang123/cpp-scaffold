@@ -124,13 +124,13 @@ if [ "$MODE" = "compare" ]; then
     [[ "$JSON_A" != */* ]] && JSON_A="$OUT_DIR/$JSON_A"
     [[ "$JSON_B" != */* ]] && JSON_B="$OUT_DIR/$JSON_B"
 
-    COMPARE_SCRIPT="third_party/google-benchmark/tools/compare.py"
+    COMPARE_SCRIPT="google-benchmark-offline/tools/compare.py"
     if [ ! -f "$COMPARE_SCRIPT" ]; then
         COMPARE_SCRIPT=$(find . -path '*/benchmark/tools/compare.py' -type f 2>/dev/null | head -1)
     fi
     if [ -z "$COMPARE_SCRIPT" ] || [ ! -f "$COMPARE_SCRIPT" ]; then
         echo "错误: 找不到 compare.py"
-        echo "路径: third_party/google-benchmark/tools/compare.py"
+        echo "路径: google-benchmark-offline/tools/compare.py"
         exit 1
     fi
     [ ! -f "$JSON_A" ] && echo "错误: $JSON_A 不存在" && exit 1

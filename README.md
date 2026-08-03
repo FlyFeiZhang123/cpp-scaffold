@@ -92,7 +92,8 @@ my_project/
 │       └── pin_thread.h       # 绑核工具
 ├── cmake/
 │   └── Dependencies.cmake     # 依赖声明（三级降级链）
-├── third_party/               # 第三方 vendor / submodule
+├── doctest-offline/           # doctest 离线副本（本地优先）
+├── google-benchmark-offline/  # Google Benchmark 离线副本（本地优先）
 ├── example/
 │   └── main.cpp
 ├── out/                      # 输出文件（perf / benchmark / logs）
@@ -221,6 +222,8 @@ cpp-scaffold/
 │   ├── basic_install.bash   #   gcc、cmake、ninja、clangd 等
 │   ├── conan_install.bash   #   Conan 2.x
 │   └── perf_install.bash    #   perf + FlameGraph
+├── doctest-offline/         # doctest 离线副本（setup_all.bash 克隆）
+├── google-benchmark-offline/# Google Benchmark 离线副本（setup_all.bash 克隆）
 ├── templates/               # 项目模板（会被复制到新项目）
 │   ├── CMakeLists.txt
 │   ├── conanfile.txt
