@@ -8,6 +8,7 @@ _my_build() {
     # ── 所有选项（提前定义，唯一性检查需要）──
     local opts="--exe-src --which -w -j test lto valgrind ubsan"
     [[ ! "$already" =~ asan && ! "$already" =~ no-asan ]] && opts+=" asan no-asan"
+    [[ ! "$already" =~ openmp && ! "$already" =~ no-openmp ]] && opts+=" openmp no-openmp"
     [[ ! "$already" =~ asan && ! "$already" =~ tsan ]]   && opts+=" tsan"
     [[ ! "$already" =~ perf && ! "$already" =~ no-perf ]] && opts+=" perf no-perf"
     [[ ! "$already" =~ march && ! "$already" =~ no-march ]] && opts+=" march no-march"

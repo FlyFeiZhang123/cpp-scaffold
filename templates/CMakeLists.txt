@@ -19,6 +19,7 @@ option(USE_FOR_VALGRIND "Build with Valgrind-compatible debug info" OFF)
 option(ENABLE_PERF   "Keep frame pointer for perf"         ON)
 option(USE_MARCH_NATIVE "Enable -march=native (real HW)"   ON)   # ← WSL2 VM 上不要开
 option(ENABLE_LTO    "Link-time optimization"              OFF)
+option(ENABLE_OPENMP "OpenMP parallelization"              OFF)
 option(ENABLE_CCACHE "Use ccache if available"             ON)
 set(INSTALL_GLOBAL   OFF)
 
@@ -127,6 +128,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   if(ENABLE_LTO)
     apply_flags(-flto)
     apply_link_flags(-flto)
+  endif()
+
+  # ── OpenMP ──
+  if(ENABLE_OPENMP)
+    apply_flags(-fopenmp)
+    apply_link_flags(-fopenmp)
   endif()
 
 endif()

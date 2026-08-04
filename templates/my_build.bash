@@ -26,6 +26,7 @@ Sanitizers:
 
 优化:
   lto                    启用链接时优化（默认 OFF）
+  openmp / no-openmp     OpenMP 并行（默认 OFF，建议配合 release 使用）
 
 构建:
   release / debug        构建类型（默认 Debug）
@@ -47,6 +48,7 @@ ENABLE_UBSAN=OFF
 ENABLE_PERF=ON
 USE_MARCH_NATIVE=ON
 ENABLE_LTO=OFF
+ENABLE_OPENMP=OFF
 USE_FOR_VALGRIND=OFF
 EXECUTABLE_SRC="main.cpp"     # 仅首次构建的默认值，之后由 CMake 缓存决定
 _EXPLICIT_EXE_SRC=0
@@ -67,6 +69,8 @@ for arg in "$@"; do
         march)      USE_MARCH_NATIVE=ON ;;
         no-march)   USE_MARCH_NATIVE=OFF ;;
         lto)        ENABLE_LTO=ON      ;;
+        openmp)     ENABLE_OPENMP=ON   ;;
+        no-openmp)  ENABLE_OPENMP=OFF  ;;
         release)    BUILD_TYPE="Release" ;;
         debug)      BUILD_TYPE="Debug"   ;;
         test)       RUN_TESTS=ON       ;;
@@ -107,6 +111,7 @@ _info "UBSAN"        "$ENABLE_UBSAN"
 _info "Perf (fp)"    "$ENABLE_PERF"
 _info "march=native" "$USE_MARCH_NATIVE"
 _info "LTO"          "$ENABLE_LTO"
+_info "OpenMP"       "$ENABLE_OPENMP"
 _info "CCache"       "$(command -v ccache >/dev/null 2>&1 && echo 'enabled' || echo 'not installed')"
 _info "Jobs"         "$JOBS"
 _info "Exe src"      "example/$EXECUTABLE_SRC"
@@ -144,6 +149,7 @@ CMAKE_ARGS=(
     -DENABLE_PERF="$ENABLE_PERF"
     -DUSE_MARCH_NATIVE="$USE_MARCH_NATIVE"
     -DENABLE_LTO="$ENABLE_LTO"
+    -DENABLE_OPENMP="$ENABLE_OPENMP"
     -DUSE_FOR_VALGRIND="$USE_FOR_VALGRIND"
 )
 
