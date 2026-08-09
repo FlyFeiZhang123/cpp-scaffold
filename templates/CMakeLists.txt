@@ -46,23 +46,8 @@ if(ENABLE_CCACHE)
   endif()
 endif()
 
-# ===== 2. 依赖（三种获取方式） =====
-#
-# 方式一：find_package — 库已编译安装（系统 apt / Conan / 手动 install）
-#   find_package(fmt REQUIRED)
-#   target_link_libraries(${LIB_NAME} PRIVATE fmt::fmt)
-#
-#   如果库装在非标准路径（如自己编的放在 /root/xxx/install）：
-#     list(APPEND CMAKE_PREFIX_PATH "/root/xxx/install")
-#     find_package(behaviortree_cpp REQUIRED)
-#
-# 方式二：add_subdirectory — 源码在本地（git submodule / vendor）
-#   add_subdirectory(third_party/muduo muduo_build)
-#   target_link_libraries(${LIB_NAME} PRIVATE muduo_net muduo_base)
-#   target_include_directories(${LIB_NAME} PUBLIC third_party/muduo/include)
-#
-# 方式三：FetchContent — 自动下载 + add_subdirectory，统一写在 cmake/Dependencies.cmake,如果写过的就不用再find_package了
-# include(cmake/Dependencies.cmake) 
+# ===== 2. 依赖 — 去 cmake/Dependencies.cmake 里声明 =====
+include(cmake/Dependencies.cmake)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp") #从这里触发增量管理，不需要重新编译了，大多数时候效率更高
 
