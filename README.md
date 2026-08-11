@@ -51,9 +51,8 @@ sudo ./scripts/setup_mirror.bash
 
 ```bash
 export BASE_SETTINGS_DIR="$HOME/cpp-scaffold"
-alias newproj='$BASE_SETTINGS_DIR/install.bash'
 
-# tab 补全（my_build.bash / bench_use.bash / perf_use.bash）
+# 补全 + 环境设置（settings_use.bash / my_build.bash / bench_use.bash / perf_use.bash）
 for f in "$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
     [ -f "$f" ] && source "$f"
 done
