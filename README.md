@@ -96,9 +96,10 @@ my_project/
 ├── google-benchmark-offline/  # Google Benchmark 离线副本（本地优先）
 ├── example/
 │   └── main.cpp
-├── out/                      # 输出文件（perf / benchmark / logs）
+├── out/                      # 输出文件（perf / benchmark / heaptrack / logs）
 │   ├── perf/
 │   ├── bench/
+│   ├── heaptrack/
 │   └── logs/
 ├── .vscode/                  # VS Code 配置（选 v 时）
 │   ├── launch.json           #   调试配置（普通 + sudo 两种）
@@ -147,6 +148,9 @@ cmake -B build -DBUILD_BENCHMARKS=OFF .
 # 链接时优化
 ./my_build.bash release lto
 
+# OpenMP 并行（建议配合 release + -O3 使用）
+./my_build.bash release no-asan openmp
+
 # 指定入口文件
 ./my_build.bash --exe-src=main.cpp
 ```
@@ -160,6 +164,35 @@ cmake -B build -DBUILD_BENCHMARKS=OFF .
 # Valgrind 检测内存泄漏
 valgrind --leak-check=full ./build/app
 
+# ── 内存诊断 ──
+# 看一眼进程内存全景（零开销，生产环境可用）
+pmap -x $(pgrep -f build/app)
+
+# 找占用最大的内存段
+pmap -x $(pgrep -f build/app) | sort -k3 -n | tail -20
+
+# 实时盯着，看内存涨不涨
+watch -n 2 'pmap -x $(pgrep -f build/app) | tail -20'
+
+```
+
+| pmap 输出 | 判断 | 下一步 |
+|-----------|------|--------|
+| `[heap]` RSS 持续涨 | 堆泄漏（new/delete 问题） | heaptrack |
+| `[anon]` 段又大又多 | mmap 或线程栈泄漏（每个 8MB） | 数段数 ≈ 线程数 |
+| `.so` 的 RSS 异常大 | 动态库内部静态分配过大 | 读库源码 |
+| `[stack]` 出现多个 | 线程创建了没回收 | 查线程管理逻辑 |
+
+```bash
+mkdir -p out/heaptrack
+heaptrack -o out/heaptrack/app ./build/app
+
+# 图形化分析（本地桌面，需安装: sudo apt install heaptrack heaptrack-gui）
+heaptrack_gui $(ls -t out/heaptrack/app.*.gz | head -1)
+
+# 纯文本报告（SSH / 无桌面环境）
+heaptrack_print $(ls -t out/heaptrack/app.*.gz | head -1) | less
+
 # ── Benchmark ──
 # 表格输出 + PMU 计数器（cache miss / cycles / branch miss）
 ./bench_use.bash
@@ -167,9 +200,10 @@ valgrind --leak-check=full ./build/app
 # 绑核 + 过滤
 ./bench_use.bash --bind 0 --filter add
 
-# 导出 JSON 并对比
-./bench_use.bash --json --out out/bench/v1.json
-./bench_use.bash --compare out/bench/v1.json out/bench/v2.json
+# 导出 JSON 并对比（自动存入 out/bench/）
+./bench_use.bash --json --out v1.json
+./bench_use.bash --json --out v2.json
+./bench_use.bash --compare v1.json v2.json
 
 # ── 性能采样 ──
 # 默认采样 build/app，wrap 模式（程序结束自动停）
@@ -205,6 +239,7 @@ valgrind --leak-check=full ./build/app
 | `perf` / `no-perf`  | 帧指针开关（默认开，火焰图需要）       |
 | `march` / `no-march`| -march=native 开关（默认开）           |
 | `lto`               | 启用链接时优化                         |
+| `openmp` / `no-openmp` | OpenMP 并行（默认关，建议配合 release） |
 | `valgrind`          | 生成 dwarf-4 调试信息（兼容 Valgrind） |
 | `release` / `debug` | 构建类型，默认 Debug                   |
 | `--exe-src=<file>`  | 指定 `example/` 下的入口源文件         |
@@ -219,7 +254,8 @@ valgrind --leak-check=full ./build/app
 cpp-scaffold/
 ├── scripts/                 # 安装脚本
 │   ├── setup_mirror.bash    #   apt 换源（阿里云主 + 清华副）
-│   ├── basic_install.bash   #   gcc、cmake、ninja、clangd 等
+│   ├── basic_install.bash   #   基础开发工具（gcc/cmake/gdb/clangd/valgrind）
+│   ├── extra_install.bash   #   额外工具（heaptrack/clang-tidy/iwyu）
 │   ├── conan_install.bash   #   Conan 2.x
 │   └── perf_install.bash    #   perf + FlameGraph
 ├── doctest-offline/         # doctest 离线副本（setup_all.bash 克隆）
