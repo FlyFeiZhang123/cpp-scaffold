@@ -261,6 +261,8 @@ cpp-scaffold/
 ├── google-benchmark-offline/# Google Benchmark 离线副本（setup_all.bash 克隆）
 ├── templates/               # 项目模板（会被复制到新项目）
 │   ├── CMakeLists.txt
+│   ├── .clang-format        #   复制到新项目
+│   ├── .clang-tidy          #   复制到新项目
 │   ├── conanfile.txt
 │   ├── my_build.bash        #   构建脚本
 │   ├── perf_use.bash        #   性能分析
@@ -287,8 +289,6 @@ cpp-scaffold/
 │   └── debug.json
 ├── setup_all.bash           # 一键安装（入口）
 ├── install.bash             # 项目初始化（newproj 入口）
-├── .clang-format
-├── .clang-tidy
 ├── .gitignore
 ├── README.md
 └── LICENSE
