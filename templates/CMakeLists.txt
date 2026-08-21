@@ -59,6 +59,9 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp") #从这里触发增量�
 add_library(${LIB_NAME} ${SOURCES})
 target_include_directories(${LIB_NAME} PUBLIC include/)   # 库的头文件公开给链接者，这里如果想要让这个传递给test,需要link_libraries的时候用PUBLIC
 
+# ===== 3.5 第三方库统一链接（依赖在 cmake/Dependencies.cmake 里声明，这里集中处理）=====
+# 例：target_link_libraries(${LIB_NAME} PRIVATE nlohmann_json::nlohmann_json fmt::fmt)
+
 # ===== 4. 创建可执行文件 =====
 add_executable(${EXECUTABLE_NAME} example/${EXECUTABLE_SRC})
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include/)

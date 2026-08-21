@@ -25,37 +25,20 @@ fi
 
 export BASE_SETTINGS_DIR
 
-echo "→ 1/5 基础工具"
+echo "→ 1/3 基础工具"
 "${BASE_SETTINGS_DIR}/scripts/basic_install.bash"
 echo ""
 
-echo "→ 2/5 Conan"
+echo "→ 2/3 Conan"
 "${BASE_SETTINGS_DIR}/scripts/conan_install.bash"
 echo ""
 
-echo "→ 3/5 perf + FlameGraph"
+echo "→ 3/3 perf + FlameGraph"
 "${BASE_SETTINGS_DIR}/scripts/perf_install.bash"
 echo ""
 
-echo "→ 4/5 doctest（离线测试框架）"
-if [ -d "${BASE_SETTINGS_DIR}/doctest-offline" ]; then
-    echo "doctest-offline 已存在，跳过"
-else
-    git clone --depth 1 git@github.com:doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline" 2>/dev/null || \
-    git clone --depth 1 https://github.com/doctest/doctest.git "${BASE_SETTINGS_DIR}/doctest-offline"
-    echo "doctest-offline → ${BASE_SETTINGS_DIR}/doctest-offline"
-fi
-echo ""
-
-echo "→ 5/5 Google Benchmark（离线性能测试）"
-if [ -d "${BASE_SETTINGS_DIR}/google-benchmark-offline" ]; then
-    echo "google-benchmark-offline 已存在，跳过"
-else
-    git clone --depth 1 --branch v1.9.4 https://gitee.com/mirrors/benchmark.git "${BASE_SETTINGS_DIR}/google-benchmark-offline" 2>/dev/null || \
-    git clone --depth 1 --branch v1.9.4 https://github.com/google/benchmark.git "${BASE_SETTINGS_DIR}/google-benchmark-offline"
-    echo "google-benchmark-offline → ${BASE_SETTINGS_DIR}/google-benchmark-offline"
-fi
-echo ""
+# doctest / Google Benchmark 不再单独克隆 —— 由 CPM.cmake 在首次构建时拉取到
+# ~/.cache/cpm（CPM_SOURCE_CACHE），下载一次 → 之后所有项目离线可用。
 
 echo "============================================"
 echo "  全部安装完成"

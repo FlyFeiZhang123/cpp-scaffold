@@ -1,19 +1,13 @@
-# ===== 依赖获取策略 =====
-# 根目录 -offline 离线副本优先；否则 FetchContent (GitHub)
-include(FetchContent)
+# ===== 测试依赖（CPM：下载一次 → CPM_SOURCE_CACHE 缓存，之后离线可用）=====
+# CPM 已由 cmake/Dependencies.cmake 初始化，这里直接用 CPMAddPackage
 
 # ===== 单元测试 (doctest) =====
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
-    set(doctest_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../doctest-offline")
-    add_subdirectory(${doctest_SOURCE_DIR} "${CMAKE_BINARY_DIR}/_deps/doctest")
-else()
-    FetchContent_Declare(
-        doctest
-        GIT_REPOSITORY https://github.com/doctest/doctest.git
-        GIT_TAG v2.4.11
-    )
-    FetchContent_MakeAvailable(doctest)
-endif()
+CPMAddPackage(
+    NAME doctest
+    GITHUB_REPOSITORY doctest/doctest
+    GIT_TAG v2.5.0
+    FORCE   # 框架依赖固定走 CPM，保证 doctest_SOURCE_DIR 可用于 doctest.cmake
+)
 include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
 
 file(GLOB TEST_SOURCES "unit/*.cpp")
@@ -31,23 +25,16 @@ doctest_discover_tests(${PROJECT_NAME}_unit_test)
 # ===== 性能基准测试 (Google Benchmark) =====
 option(BUILD_BENCHMARKS "Build benchmarks" ON)
 if(BUILD_BENCHMARKS)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
-        set(benchmark_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../google-benchmark-offline")
-        set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-        set(BENCHMARK_ENABLE_LIBPFM ON CACHE BOOL "" FORCE)
-        set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
-        add_subdirectory(${benchmark_SOURCE_DIR} "${CMAKE_BINARY_DIR}/_deps/benchmark")
-    else()
-        FetchContent_Declare(
-            benchmark
-            GIT_REPOSITORY https://github.com/google/benchmark.git
-            GIT_TAG v1.9.4
-        )
-        set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-        set(BENCHMARK_ENABLE_LIBPFM ON CACHE BOOL "" FORCE)
-        set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
-        FetchContent_MakeAvailable(benchmark)
-    endif()
+    CPMAddPackage(
+        NAME benchmark
+        GITHUB_REPOSITORY google/benchmark
+        GIT_TAG v1.9.4
+        OPTIONS
+            "BENCHMARK_ENABLE_TESTING OFF"
+            "BENCHMARK_ENABLE_LIBPFM ON"
+            "BENCHMARK_ENABLE_WERROR OFF"
+        FORCE
+    )
 
     file(GLOB BENCH_SOURCES "benchmark/*.cpp")
 

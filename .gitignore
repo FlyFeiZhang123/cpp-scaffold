@@ -9,8 +9,7 @@
 /.cache/
 *.profraw
 
-/doctest-offline/
-/google-benchmark-offline/
+# 手工 vendored 的第三方源码
 /third_party/
 
 # CMake 生成的文件（如果落在源码树里）

@@ -10,11 +10,11 @@
 | -------- | ------------------------ | --------------------------------------- |
 | 构建系统 | CMake 3.20+ + Ninja/Make | 支持 Debug / Release / Sanitizer 多配置 |
 | 包管理   | Conan 2.x                | 可选，通过 `conanfile.txt` 开启         |
-| 依赖管理 | cmake/Dependencies.cmake  | find_package → vendor → FetchContent 三级降级 |
+| 依赖管理 | CPM.cmake + Conan          | conan 覆盖的走 conan；其余 CPM 一行拉取，CPM_SOURCE_CACHE 离线缓存 |
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
 | Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash` 原生补全 |
 | 代码格式化 | clang-format + clang-tidy | 模板自带                               |
-| 单元测试 | doctest                  | FetchContent 自动获取，支持离线缓存     |
+| 单元测试 | doctest                  | CPM 自动获取（钉 v2.5.0），CPM_SOURCE_CACHE 离线缓存 |
 | 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
 | 内存检测 | ASan / TSan / UBSan      | 编译参数一键切换                        |
 | 内存泄漏 | Valgrind                 | 兼容 dwarf-4 调试信息                   |
@@ -90,9 +90,10 @@ my_project/
 │       ├── bench_main.cpp     # Google Benchmark 性能基准
 │       └── pin_thread.h       # 绑核工具
 ├── cmake/
-│   └── Dependencies.cmake     # 依赖声明（三级降级链）
-├── doctest-offline/           # doctest 离线副本（本地优先）
-├── google-benchmark-offline/  # Google Benchmark 离线副本（本地优先）
+│   ├── CPM.cmake              # CPM 依赖管理（vendored）
+│   └── Dependencies.cmake     # 依赖声明（CPM / conan / vendored）
+├── tools/
+│   └── benchmark_tools/       # bench_use --compare 用的 compare.py + gbench
 ├── example/
 │   └── main.cpp
 ├── out/                      # 输出文件（perf / benchmark / heaptrack / logs）
@@ -257,8 +258,6 @@ cpp-scaffold/
 │   ├── extra_install.bash   #   额外工具（heaptrack/clang-tidy/iwyu）
 │   ├── conan_install.bash   #   Conan 2.x
 │   └── perf_install.bash    #   perf + FlameGraph
-├── doctest-offline/         # doctest 离线副本（setup_all.bash 克隆）
-├── google-benchmark-offline/# Google Benchmark 离线副本（setup_all.bash 克隆）
 ├── templates/               # 项目模板（会被复制到新项目）
 │   ├── CMakeLists.txt
 │   ├── .clang-format        #   复制到新项目
@@ -268,9 +267,12 @@ cpp-scaffold/
 │   ├── perf_use.bash        #   性能分析
 │   ├── bench_use.bash       #   Benchmark 脚本
 │   ├── cmake/
-│   │   └── Dependencies.cmake #   依赖声明（三级降级链）
+│   │   ├── CPM.cmake        #   CPM 依赖管理（vendored，钉版本）
+│   │   └── Dependencies.cmake #   依赖声明（CPM / conan / vendored）
 │   ├── Doxyfile
 │   ├── example/
+│   ├── tools/
+│   │   └── benchmark_tools/  #   bench_use --compare 的 compare.py（vendored）
 │   ├── tests/
 │   │   ├── CMakeLists.txt
 │   │   ├── unit/test_main.cpp     #   doctest 单元测试
@@ -337,7 +339,19 @@ CMakeLists.txt 使用了 `CONFIGURE_DEPENDS` 自动检测，通常无需手动�
 
 **Q: 没有网络时如何编译测试？**
 
-项目生成时自动复制 `doctest-offline/` 和 `google-benchmark-offline/` 到项目目录，CMake 本地优先；若不存在则从 GitHub FetchContent 自动下载。
+CPM.cmake 首次构建时把 doctest / Google Benchmark 拉取到 `~/.cache/cpm`（`CPM_SOURCE_CACHE`），下载一次之后所有项目离线可用。首次构建需联网；也可以先在有网环境跑一次 `./my_build.bash test` 预热缓存。
+
+**Q: 怎么看 CPM 装了哪些包、什么版本？**
+
+不需要额外文件——所有依赖都用 `GIT_TAG` 钉死了版本，声明文件本身就是清单：
+
+- 普通库 → `cmake/Dependencies.cmake`
+- 测试框架/基准 → `tests/CMakeLists.txt`
+
+快速查看：
+```bash
+grep -E "GITHUB_REPOSITORY|GIT_TAG" cmake/Dependencies.cmake tests/CMakeLists.txt
+```
 
 **Q: 添加库目录后 clangd 不提示但编译正常？**
 
