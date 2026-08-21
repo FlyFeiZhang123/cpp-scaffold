@@ -126,10 +126,7 @@ if [ "$MODE" = "compare" ]; then
 
     COMPARE_SCRIPT="tools/benchmark_tools/compare.py"
     if [ ! -f "$COMPARE_SCRIPT" ]; then
-        # 兼容旧项目：-offline 克隆或 build/_deps 下的源码
-        [ -f "google-benchmark-offline/tools/compare.py" ] && COMPARE_SCRIPT="google-benchmark-offline/tools/compare.py"
-    fi
-    if [ ! -f "$COMPARE_SCRIPT" ]; then
+        # 兼容旧项目：build/_deps 下 CPM/FetchContent 拉的源码树
         COMPARE_SCRIPT=$(find . -path '*/benchmark/tools/compare.py' -type f 2>/dev/null | head -1)
     fi
     if [ -z "$COMPARE_SCRIPT" ] || [ ! -f "$COMPARE_SCRIPT" ]; then
