@@ -45,6 +45,7 @@ for f in my_build.bash perf_use.bash bench_use.bash; do
     copy_tpl "$BASE_SETTINGS_DIR/templates/$f" "./$f"
 done
 copy_tpl "$BASE_SETTINGS_DIR/templates/cmake" "./cmake"
+copy_tpl "$BASE_SETTINGS_DIR/templates/third_party/README.md" "./third_party/README.md"
 [ "$CONAN_FLAG" = "y" ] && copy_tpl "$BASE_SETTINGS_DIR/templates/conanfile.txt" "./conanfile.txt"
 
 copy_tpl "$BASE_SETTINGS_DIR/templates/example"       "./example"

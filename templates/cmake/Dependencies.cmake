@@ -16,7 +16,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
 # 三层原则：
 #   conan 能装               → conanfile.txt 声明（conan install）
 #   conan 没有，GitHub 有源码 → 下面用 CPMAddPackage 一行拉取  ← 加在这里
-#   需要 patch / 私有         → third_party/ vendored，add_subdirectory
+#   需要 patch / 私有 / 本地改装 → third_party/ vendored，或下方"写法④⑤⑥"的 CPM 本地机制
 #
 # 写法① GIT_TAG 显式写法（推荐，版本号带 v 也没关系，和 doctest/benchmark 一致）：
 #   CPMAddPackage(
@@ -35,6 +35,28 @@ include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
 #       GIT_TAG 11.1.3
 #       OPTIONS "FMT_TEST OFF"        # fmt 自带的测试，CPM 拉下来时不需要
 #   )
+#
+# ════════════════════════════════════════════════════════════════════════════
+# 本地改装：不用 CPM 拉远程，改用自己改过的版本（三个机制，按场景选一种）
+# ════════════════════════════════════════════════════════════════════════════
+#   fork 整个库 / 改动很多  → third_party/ vendored（见写法④，详见 third_party/README.md）
+#   平时官方、偶尔切本地调试 → CPM_<NAME>_SOURCE 变量手动覆盖（见写法⑤）
+#   只改官方库几个文件       → PATCHES 打补丁（见写法⑥）
+#
+# 写法④ vendored：把改好的源码整个放进 third_party/，两种接法：
+#   add_subdirectory(third_party/foo)                        # 直连（target 名要和库产出的一致）
+#   CPMAddPackage(NAME foo SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/foo)
+#                                                           # 走 CPM 流程，foo_SOURCE_DIR 等变量照常导出
+#
+# 写法⑤ 手动覆盖（在 CPMAddPackage 之前 set，注释即恢复官方）：
+#   # set(CPM_fmt_SOURCE "/home/me/forks/fmt")
+#   CPMAddPackage(NAME fmt GITHUB_REPOSITORY fmtlib/fmt GIT_TAG 11.1.3)
+#
+# 写法⑥ 打补丁（补丁文件放 patches/，随项目进 git）：
+#   CPMAddPackage(NAME foo GITHUB_REPOSITORY foo/foo GIT_TAG v1.0
+#                 PATCHES ${CMAKE_CURRENT_SOURCE_DIR}/patches/foo.patch)
+#
+# 覆盖优先级：CPM_<NAME>_SOURCE 本地目录 > find_package(conan) > 远程拉取
 #
 # 真实依赖声明从下面开始写：
 #
