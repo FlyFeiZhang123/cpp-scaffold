@@ -5,7 +5,7 @@
 CPMAddPackage(
     NAME googletest
     GITHUB_REPOSITORY google/googletest
-    GIT_TAG v1.14.0
+    GIT_TAG v1.17.0
     FORCE   # 框架依赖固定走 CPM，与 benchmark 一致，版本钉死
 )
 
@@ -27,7 +27,7 @@ if(BUILD_BENCHMARKS)
     CPMAddPackage(
         NAME benchmark
         GITHUB_REPOSITORY google/benchmark
-        GIT_TAG v1.9.4
+        GIT_TAG v1.9.5
         OPTIONS
             "BENCHMARK_ENABLE_TESTING OFF"
             "BENCHMARK_ENABLE_LIBPFM ON"

@@ -14,7 +14,7 @@
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
 | Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash` 原生补全 |
 | 代码格式化 | clang-format + clang-tidy | 模板自带                               |
-| 单元测试 | GoogleTest               | CPM 自动获取（钉 v1.14.0），CPM_SOURCE_CACHE 离线缓存 |
+| 单元测试 | GoogleTest               | CPM 自动获取（钉 v1.17.0），CPM_SOURCE_CACHE 离线缓存 |
 | 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
 | 内存检测 | ASan / TSan / UBSan      | 编译参数一键切换                        |
 | 内存泄漏 | Valgrind                 | 兼容 dwarf-4 调试信息                   |
