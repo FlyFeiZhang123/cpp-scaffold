@@ -177,8 +177,13 @@ ln -sfn "$(realpath "${BUILD_DIR}/${EXE_NAME}")" "build/app"
 ln -sfn "$(realpath "${BUILD_DIR}/compile_commands.json")" "build/compile_commands.json"
 
 # 单元测试 & benchmark 软链接（若已编译）
-[ -x "${BUILD_DIR}/${PROJ_NAME}_unit_test" ]  && ln -sfn "$(realpath "${BUILD_DIR}/${PROJ_NAME}_unit_test")"  "build/test"
-[ -x "${BUILD_DIR}/${PROJ_NAME}_benchmark" ]  && ln -sfn "$(realpath "${BUILD_DIR}/${PROJ_NAME}_benchmark")"  "build/bench"
+# 测试目标由 add_subdirectory(tests) 产出在 build/<variant>/tests/ 子目录，根目录布局也兼容
+for _t in "${BUILD_DIR}/${PROJ_NAME}_unit_test" "${BUILD_DIR}/tests/${PROJ_NAME}_unit_test"; do
+    [ -x "$_t" ] && ln -sfn "$(realpath "$_t")" "build/test" && break
+done
+for _t in "${BUILD_DIR}/${PROJ_NAME}_benchmark" "${BUILD_DIR}/tests/${PROJ_NAME}_benchmark"; do
+    [ -x "$_t" ] && ln -sfn "$(realpath "$_t")" "build/bench" && break
+done
 
 # ===== 测试 =====
 if [ "$RUN_TESTS" = "ON" ]; then
