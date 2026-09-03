@@ -37,7 +37,7 @@ echo "→ 3/3 perf + FlameGraph"
 "${BASE_SETTINGS_DIR}/scripts/perf_install.bash"
 echo ""
 
-# doctest / Google Benchmark 不再单独克隆 —— 由 CPM.cmake 在首次构建时拉取到
+# GoogleTest / Google Benchmark 不再单独克隆 —— 由 CPM.cmake 在首次构建时拉取到
 # ~/.cache/cpm（CPM_SOURCE_CACHE），下载一次 → 之后所有项目离线可用。
 
 echo "============================================"

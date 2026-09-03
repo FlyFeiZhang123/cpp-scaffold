@@ -14,7 +14,7 @@
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
 | Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash` 原生补全 |
 | 代码格式化 | clang-format + clang-tidy | 模板自带                               |
-| 单元测试 | doctest                  | CPM 自动获取（钉 v2.5.0），CPM_SOURCE_CACHE 离线缓存 |
+| 单元测试 | GoogleTest               | CPM 自动获取（钉 v1.14.0），CPM_SOURCE_CACHE 离线缓存 |
 | 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
 | 内存检测 | ASan / TSan / UBSan      | 编译参数一键切换                        |
 | 内存泄漏 | Valgrind                 | 兼容 dwarf-4 调试信息                   |
@@ -85,7 +85,7 @@ my_project/
 ├── tests/
 │   ├── CMakeLists.txt
 │   ├── unit/
-│   │   └── test_main.cpp      # doctest 单元测试
+│   │   └── test_main.cpp      # GoogleTest 单元测试
 │   └── benchmark/
 │       ├── bench_main.cpp     # Google Benchmark 性能基准
 │       └── pin_thread.h       # 绑核工具
@@ -275,7 +275,7 @@ cpp-scaffold/
 │   │   └── benchmark_tools/  #   bench_use --compare 的 compare.py（vendored）
 │   ├── tests/
 │   │   ├── CMakeLists.txt
-│   │   ├── unit/test_main.cpp     #   doctest 单元测试
+│   │   ├── unit/test_main.cpp     #   GoogleTest 单元测试
 │   │   └── benchmark/
 │   │       ├── bench_main.cpp       #   Google Benchmark
 │   │       └── pin_thread.h         #   绑核工具
@@ -339,7 +339,7 @@ CMakeLists.txt 使用了 `CONFIGURE_DEPENDS` 自动检测，通常无需手动�
 
 **Q: 没有网络时如何编译测试？**
 
-CPM.cmake 首次构建时把 doctest / Google Benchmark 拉取到 `~/.cache/cpm`（`CPM_SOURCE_CACHE`），下载一次之后所有项目离线可用。首次构建需联网；也可以先在有网环境跑一次 `./my_build.bash test` 预热缓存。
+CPM.cmake 首次构建时把 GoogleTest / Google Benchmark 拉取到 `~/.cache/cpm`（`CPM_SOURCE_CACHE`），下载一次之后所有项目离线可用。首次构建需联网；也可以先在有网环境跑一次 `./my_build.bash test` 预热缓存。
 
 **Q: 怎么看 CPM 装了哪些包、什么版本？**
 
@@ -375,7 +375,7 @@ CMakeLists.txt 使用 `GLOB_RECURSE`，只有存在对应 .h 的 .cpp 才会被�
 | CMake Tools | `ms-vscode.cmake-tools` | ✓ | CMake 集成、F5 调试 |
 | C++ DevTools | `ms-vscode.cpp-devtools` | ★ | MS 官方 C++ 扩展，符号/性能分析 |
 | C++ Debug | `kylinideteam.cppdebug` | ★ | GDB 调试增强 |
-| TestMate C++ | `matepek.vscode-catch2-test-adapter` | ★ | 测试资源管理器（doctest/Catch2 通用） |
+| TestMate C++ | `matepek.vscode-catch2-test-adapter` | ★ | 测试资源管理器（GoogleTest/Catch2 通用） |
 | Doxygen | `cschlosser.doxdocgen` | | 自动生成 Doxygen 注释 |
 | Log Viewer | `berublan.vscode-log-viewer` | | `out/logs/*.log` 日志监控 |
 

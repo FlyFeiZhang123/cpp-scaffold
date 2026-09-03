@@ -1,26 +1,25 @@
 # ===== 测试依赖（CPM：下载一次 → CPM_SOURCE_CACHE 缓存，之后离线可用）=====
 # CPM 已由 cmake/Dependencies.cmake 初始化，这里直接用 CPMAddPackage
 
-# ===== 单元测试 (doctest) =====
+# ===== 单元测试 (GoogleTest) =====
 CPMAddPackage(
-    NAME doctest
-    GITHUB_REPOSITORY doctest/doctest
-    GIT_TAG v2.5.0
-    FORCE   # 框架依赖固定走 CPM，保证 doctest_SOURCE_DIR 可用于 doctest.cmake
+    NAME googletest
+    GITHUB_REPOSITORY google/googletest
+    GIT_TAG v1.14.0
+    FORCE   # 框架依赖固定走 CPM，与 benchmark 一致，版本钉死
 )
-include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
 
 file(GLOB TEST_SOURCES "unit/*.cpp")
 
 add_executable(${PROJECT_NAME}_unit_test ${TEST_SOURCES})
-target_link_libraries(${PROJECT_NAME}_unit_test PRIVATE ${LIB_NAME})
+target_link_libraries(${PROJECT_NAME}_unit_test PRIVATE ${LIB_NAME} gtest_main)
 target_include_directories(${PROJECT_NAME}_unit_test PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${doctest_SOURCE_DIR}
 )
 
 enable_testing()
-doctest_discover_tests(${PROJECT_NAME}_unit_test)
+include(GoogleTest)
+gtest_discover_tests(${PROJECT_NAME}_unit_test)
 
 # ===== 性能基准测试 (Google Benchmark) =====
 option(BUILD_BENCHMARKS "Build benchmarks" ON)

@@ -18,7 +18,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
 #   conan 没有，GitHub 有源码 → 下面用 CPMAddPackage 一行拉取  ← 加在这里
 #   需要 patch / 私有 / 本地改装 → third_party/ vendored，或下方"写法④⑤⑥"的 CPM 本地机制
 #
-# 写法① GIT_TAG 显式写法（推荐，版本号带 v 也没关系，和 doctest/benchmark 一致）：
+# 写法① GIT_TAG 显式写法（推荐，版本号带 v 也没关系，和 googletest/benchmark 一致）：
 #   CPMAddPackage(
 #       NAME nlohmann_json
 #       GITHUB_REPOSITORY nlohmann/json
@@ -73,6 +73,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/CPM.cmake)
 # ════════════════════════════════════════════════════════════════════════════
 # 测试框架依赖 — 见 tests/CMakeLists.txt
 # ════════════════════════════════════════════════════════════════════════════
-# doctest（单元测试）与 Google Benchmark（性能基准）在 tests/CMakeLists.txt 里
+# GoogleTest（单元测试）与 Google Benchmark（性能基准）在 tests/CMakeLists.txt 里
 # 用 CPMAddPackage 声明，只在构建测试时拉取，不污染主程序的链接。
 
