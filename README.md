@@ -44,6 +44,10 @@ sudo ./scripts/setup_mirror.bash
 ```
 
 > 支持 Ubuntu 22.04 / 24.04 / 26.04，x86_64 和 ARM64 架构。
+>
+> 注：Conan 用 uv 安装（装到 `~/.local/bin`）。若本机没有 uv，`conan_install.bash`
+> 会自动执行官方脚本 `curl -LsSf https://astral.sh/uv/install.sh | sh`（需联网）。
+> 介意自动执行远程脚本的话，可先手动装好 uv 再跑 setup_all。
 
 ### 2. 配置快捷命令
 
