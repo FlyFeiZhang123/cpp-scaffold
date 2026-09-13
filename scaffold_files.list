@@ -1,0 +1,70 @@
+# ============================================================
+#  scaffold_files.list —— 脚手架文件清单（唯一真源）
+#
+#  install.bash（创建项目）和 scripts/update.bash（更新已有项目）都读这一份，
+#  所以「哪些文件属于脚手架」只在这里定义一次，不会有第二份跟着漂移。
+#
+#  本文件放在仓库根，不在 templates/ 里 —— 它是【声明】，不是模板。
+#  而且它登记的东西本来就横跨两处：大部分源在 templates/ 下，但
+#  .vscode/、.zed/、.gitignore、README.md 的源就在仓库根。
+#
+#  列：  类  标志  源（相对 BASE_SETTINGS_DIR）  目标（相对项目根）
+#
+#  类（只有 update 用；install 一律「已存在就跳过」，不看类）:
+#    A  脚手架所有，无用户内容 → 更新时强覆盖；项目里缺就补上
+#    B  用户领域（源码、示例）→ 更新时完全不碰
+#    C  两边都可能改 → 更新时【只报告】：缺了报缺失，不同报差异，不写入
+#
+#  标志（可叠加，- 表示无）:
+#    X  可执行位（chmod u+x）
+#    S  需替换占位符 __PROJECT_NAME__ / __EXECUTABLE_NAME__（生成时用真名替换）
+#    N  仅当 conan=y（第 3 个参数）
+#    V  仅当 editor=v（第 4 个参数）
+#    Z  仅当 editor=z（第 4 个参数）
+#    D  整目录（源是目录，目标也是目录）
+#
+#  注意：类是【按文件】分的，不是按目录。cmake/ 和 tests/ 都是混血目录，
+#  所以它们必须一个文件一行 —— 整目录登记会把两种归属搅在一起。
+# ============================================================
+
+# ── 脚手架脚本（A 类：纯脚手架，用户不该改）──
+A  X   templates/my_build.bash                    my_build.bash
+A  X   templates/perf_use.bash                    perf_use.bash
+A  X   templates/bench_use.bash                   bench_use.bash
+A  X   templates/task_tracker.bash                task_tracker.bash
+
+# ── 依赖管理 ──
+A  -   templates/cmake/CPM.cmake                  cmake/CPM.cmake
+C  -   templates/cmake/Dependencies.cmake         cmake/Dependencies.cmake
+A  -   templates/third_party/README.md            third_party/README.md
+C  N   templates/conanfile.txt                    conanfile.txt
+
+# ── 构建 / 文档 / 代码风格配置 ──
+C  S   templates/CMakeLists.txt                   CMakeLists.txt
+A  -   templates/Doxyfile                         Doxyfile
+A  -   templates/.clang-format                    .clang-format
+A  -   templates/.clang-tidy                      .clang-tidy
+C  -   .gitignore                                 .gitignore
+C  -   README.md                                  README.md
+
+# ── 测试 ──
+C  -   templates/tests/CMakeLists.txt             tests/CMakeLists.txt
+C  -   templates/tests/unit/test_main.cpp         tests/unit/test_main.cpp
+C  -   templates/tests/benchmark/bench_main.cpp   tests/benchmark/bench_main.cpp
+A  -   templates/tests/benchmark/pin_thread.h     tests/benchmark/pin_thread.h
+
+# ── 示例目录（B 类：整目录给用户，更新不碰）──
+B  D   templates/example                          example
+B  -   templates/include/calculator.h             include/calculator.h
+B  -   templates/src/calculator.cpp               src/calculator.cpp
+
+# ── 第三方工具（A 类：vendored，整目录）──
+A  D   templates/tools                            tools
+
+# ── 编辑器配置 ──
+A  V   .vscode/launch.json                        .vscode/launch.json
+A  V   .vscode/settings.json                      .vscode/settings.json
+A  V   .vscode/tasks.json                         .vscode/tasks.json
+A  VX  .vscode/sudo_gdb.sh                        .vscode/sudo_gdb.sh
+A  V   .vscode/cpp.code-snippets                  .vscode/cpp.code-snippets
+A  Z   .zed/debug.json                            .zed/debug.json

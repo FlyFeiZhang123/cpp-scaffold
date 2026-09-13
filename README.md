@@ -17,6 +17,7 @@
 | 单元测试 | GoogleTest               | CPM 自动获取（钉 v1.17.0），CPM_SOURCE_CACHE 离线缓存 |
 | 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
 | 任务追踪 | bash 脚本                | `./task_tracker.bash` 记录待办，附件/标签/统计，零依赖 |
+| 项目更新 | bash 脚本                | 项目目录里敲 `updproj` 更新到脚手架当前版本（A 覆盖 / B 不碰 / C 只报告），默认只看不改 |
 | 内存检测 | ASan / TSan / UBSan      | 编译参数一键切换                        |
 | 内存泄漏 | Valgrind                 | 兼容 dwarf-4 调试信息                   |
 | 性能分析 | perf + FlameGraph        | 三种采样模式，一键生成火焰图            |
@@ -278,6 +279,38 @@ heaptrack_print $(ls -t out/heaptrack/app.*.gz | head -1) | less
 
 ---
 
+### 7. 更新已有项目
+
+脚手架自己演进了（换了测试框架、改了编译脚本），已有项目想跟上：
+
+```bash
+cd 你的项目
+updproj          # 先看，一个字节都不改
+updproj --apply  # 确认了再动盘
+```
+
+`updproj` 是 `scripts/update.bash` 的别名（跟 `newproj` 一样，由 `~/.bashrc` 里那段 source 循环带进来），在哪个目录敲就更新哪个项目，也可以 `updproj /path/to/项目`。没配别名就直接 `bash ~/cpp-scaffold/scripts/update.bash`。改动过 `settings_use.bash` 后要 `source ~/.bashrc` 或开个新终端才生效。
+
+哪些文件归谁管写在仓库根的 `scaffold_files.list` 里（`install.bash` 和 `update.bash` 共用同一份清单，不会各写各的），按文件分三类：
+
+| 类    | 是什么                                                                    | update 怎么做           |
+| ----- | ------------------------------------------------------------------------- | ----------------------- |
+| **A** | 脚手架自己的东西：几个 `.bash` 脚本、`cmake/CPM.cmake`、clang 配置、编辑器配置、`tools/` | **强制覆盖**，缺的补上  |
+| **B** | 你的地盘：`src/`、`include/`、`example/`                                   | 一个字都不碰            |
+| **C** | 两边都可能改：`CMakeLists.txt`、`README.md`、`.gitignore`、`tests/`        | **只看不写**（除下面一个） |
+
+> ⚠ **A 类是强制覆盖，你对这些文件的本地改动会丢。** 它们本来就不该在项目里改 —— 要改就改脚手架仓库本身，下次 update 自然带过来。（`tools/` 是合并式覆盖：同名文件盖掉，你自己往里加的文件保留。）
+
+C 类里只有 `CMakeLists.txt` 会被检查：脚本先把模板里的占位符换成你项目的真名，再跟你的比，**只报同不同**。因为你的项目名和自定义目标都在里面，脚本没资格替你决定。有差异时会打一份 diff，并给出重来一遍的命令：
+
+```bash
+rm CMakeLists.txt && newproj 你的项目名 你的可执行名
+```
+
+`install.bash` 只补不覆盖，所以删掉这一个文件就只重生成它。其余 C 类文件（README、`.gitignore`、`tests/` 等）脚本看都不看。
+
+---
+
 ## 构建选项速查
 
 | 参数                | 效果                                   |
@@ -306,7 +339,11 @@ cpp-scaffold/
 │   ├── basic_install.bash   #   基础开发工具（gcc/cmake/gdb/clangd/valgrind）
 │   ├── extra_install.bash   #   额外工具（heaptrack/clang-tidy/iwyu）
 │   ├── conan_install.bash   #   Conan 2.x
-│   └── perf_install.bash    #   perf + FlameGraph
+│   ├── perf_install.bash    #   perf + FlameGraph
+│   ├── scaffold_lib.bash    #   install/update 共用：读清单、取项目名
+│   ├── scaffold_test.bash   #   脚手架自测（CI 跑这个）
+│   └── update.bash          #   更新已有项目（默认 dry-run）
+├── scaffold_files.list      # ★ 文件清单：哪些文件、归 A/B/C 哪类，唯一真源
 ├── templates/               # 项目模板（会被复制到新项目）
 │   ├── CMakeLists.txt
 │   ├── .clang-format        #   复制到新项目
