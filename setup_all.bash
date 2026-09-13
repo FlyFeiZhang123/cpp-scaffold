@@ -52,7 +52,7 @@ if ! grep -q "BASE_SETTINGS_DIR" ~/.bashrc 2>/dev/null; then
 # cpp-scaffold
 export BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR}"
 
-# 补全 + 环境设置（settings_use.bash / my_build.bash / bench_use.bash / perf_use.bash）
+# 补全 + 环境设置（settings_use.bash / my_build.bash / bench_use.bash / perf_use.bash / task_tracker.bash）
 for f in "\$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
     [ -f "\$f" ] && source "\$f"
 done

@@ -41,7 +41,7 @@ copy_tpl() {
 }
 
 # ---- 通用模板文件 ----
-for f in my_build.bash perf_use.bash bench_use.bash; do
+for f in my_build.bash perf_use.bash bench_use.bash task_tracker.bash; do
     copy_tpl "$BASE_SETTINGS_DIR/templates/$f" "./$f"
 done
 copy_tpl "$BASE_SETTINGS_DIR/templates/cmake" "./cmake"
@@ -87,5 +87,5 @@ elif [ "$EDITOR" = "v" ]; then
     [ -f .vscode/sudo_gdb.sh ] && chmod +x .vscode/sudo_gdb.sh
 fi
 
-chmod u+x ./my_build.bash ./perf_use.bash
+chmod u+x ./my_build.bash ./perf_use.bash ./task_tracker.bash
 echo "✅ 项目 $PROJECT_NAME 创建完成"

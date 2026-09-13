@@ -12,10 +12,11 @@
 | 包管理   | Conan 2.x                | 可选，通过 `conanfile.txt` 开启         |
 | 依赖管理 | CPM.cmake + Conan          | conan 覆盖的走 conan；其余 CPM 一行拉取，CPM_SOURCE_CACHE 离线缓存 |
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
-| Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash` 原生补全 |
+| Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash`/`task_tracker.bash` 原生补全 |
 | 代码格式化 | clang-format + clang-tidy | 模板自带                               |
 | 单元测试 | GoogleTest               | CPM 自动获取（钉 v1.17.0），CPM_SOURCE_CACHE 离线缓存 |
 | 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
+| 任务追踪 | bash 脚本                | `./task_tracker.bash` 记录待办，附件/标签/统计，零依赖 |
 | 内存检测 | ASan / TSan / UBSan      | 编译参数一键切换                        |
 | 内存泄漏 | Valgrind                 | 兼容 dwarf-4 调试信息                   |
 | 性能分析 | perf + FlameGraph        | 三种采样模式，一键生成火焰图            |
@@ -56,7 +57,7 @@ sudo ./scripts/setup_mirror.bash
 ```bash
 export BASE_SETTINGS_DIR="$HOME/cpp-scaffold"
 
-# 补全 + 环境设置（settings_use.bash / my_build.bash / bench_use.bash / perf_use.bash）
+# 补全 + 环境设置（settings_use.bash / my_build.bash / bench_use.bash / perf_use.bash / task_tracker.bash）
 for f in "$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
     [ -f "$f" ] && source "$f"
 done
@@ -115,6 +116,8 @@ my_project/
 ├── my_build.bash             # 构建脚本
 ├── perf_use.bash             # 性能分析脚本
 ├── bench_use.bash            # Benchmark 脚本
+├── task_tracker.bash         # 任务追踪脚本（数据在 docs/tasks/）
+├── docs/                     # Doxygen 输出目录 + 任务数据（docs/tasks/）
 └── Doxyfile                  # 文档配置
 ```
 
@@ -225,11 +228,53 @@ heaptrack_print $(ls -t out/heaptrack/app.*.gz | head -1) | less
 
 > **调试**：VS Code 中按 `F5` 即可，`launch.json` 已配置 `preLaunchTask` 自动编译。`build/app` 软链接由 `my_build.bash` 每次构建后自动更新，指向当前构建变体，调试始终正确。
 >
-> **Tab 补全**：所有脚本都支持 bash 原生 tab 补全（零依赖）。`--exe-src` 自动补 `=` 并补全 `example/*.cpp`，`--out` 自动补全 `out/bench/*.json`。`source ~/.bashrc` 后生效。
+> **Tab 补全**：所有脚本都支持 bash 原生 tab 补全（零依赖）。`--exe-src` 自动补 `=` 并补全 `example/*.cpp`，`--out` 自动补全 `out/bench/*.json`。`task_tracker.bash` 则会补当前项目的任务 ID 和已有标签名。`source ~/.bashrc` 后生效。
 >
 > **PMU 计数器**：`bench_use.bash` 默认读取 CPU 硬件计数器。若 `kernel.perf_event_paranoid > 2`（Ubuntu 24.04+ 默认），计数器列将显示 0。运行 `sudo sysctl kernel.perf_event_paranoid=2` 修复。
 >
 > **首次调试注意**：第一次启动调试时，VS Code 会下载 C++ 调试符号（debug symbols），国内网络可能需要梯子，首次准备时间会较长（几分钟到十几分钟不等），后续调试不会重复下载。
+
+---
+
+### 6. 任务追踪
+
+`task_tracker.bash` 是个零依赖的单文件待办清单，数据就存在项目里（`docs/tasks/<id>/TASK.md`），跟着 git 走。参考 [tsoding/tatr](https://github.com/tsoding/tatr) 的设计。
+
+```bash
+# ── 记一件事 ──
+./task_tracker.bash -m "重构渲染层"
+./task_tracker.bash -m "修这个 bug" --tag bug,urgent
+
+# 给已有任务补一句说明（ID 可以只写唯一的一段）
+./task_tracker.bash -m 143129 "查到是缓存没失效"
+
+# ── 看 ──
+./task_tracker.bash -l                    # 没做完的
+./task_tracker.bash -a                    # 全部
+./task_tracker.bash -a --tag scope        # 按标签筛（多个标签是「与」）
+./task_tracker.bash -t                    # 统计标签数量
+./task_tracker.bash -t -u                 # 只统计没做完的
+
+# ── 改 ──
+./task_tracker.bash close 143129          # 改状态
+./task_tracker.bash open  143129
+./task_tracker.bash tag   143129 scope    # 加标签
+./task_tracker.bash untag 143129 scope
+
+# ── 附件 ──
+./task_tracker.bash add 143129 截图.png          # 拷进任务目录（推荐）
+./task_tracker.bash add 143129 --link src/main.cpp   # 只记路径，不拷贝
+```
+
+改标签用 `tag`/`untag`，改进度用 `open`/`close`，两根轴互不干涉——`close` 只改状态，标签原样留着。
+
+> **`add` 的第一个参数必须是任务 ID**，选项写在它后面（`add 143129 --link x.png`，不能写 `add --link 143129 x.png`）。选项都是「粘性」的，对它后面的路径生效：`add <id> a.png --link b.png` 是 a 拷贝、b 只记路径。
+
+> **`--link` 的坑**：只记路径，原文件一挪链接就断。而且预览器（VS Code 的 markdown 预览、GitHub）只放行工作区/仓库内的资源，**指向项目外的文件多半只显示破图标**——这种情况请去掉 `--link` 用默认的拷贝模式。
+>
+> LINK 记的是**从 TASK.md 算起的相对路径**，所以整棵 `docs/tasks/` 一挪位置（改名、移到别处），所有 LINK 全部失效，得手工改。
+
+`-h` 有完整用法，`docs/tasks/tags` 可以给标签写说明（`-t` 统计时会缀在后面）。
 
 ---
 
@@ -270,6 +315,7 @@ cpp-scaffold/
 │   ├── my_build.bash        #   构建脚本
 │   ├── perf_use.bash        #   性能分析
 │   ├── bench_use.bash       #   Benchmark 脚本
+│   ├── task_tracker.bash    #   任务追踪（数据在项目的 docs/tasks/）
 │   ├── cmake/
 │   │   ├── CPM.cmake        #   CPM 依赖管理（vendored，钉版本）
 │   │   └── Dependencies.cmake #   依赖声明（CPM / conan / vendored）
