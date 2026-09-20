@@ -58,7 +58,10 @@ B  D   templates/example                          example
 B  -   templates/include/calculator.h             include/calculator.h
 B  -   templates/src/calculator.cpp               src/calculator.cpp
 
-# ── 第三方工具（A 类：vendored，整目录）──
+# ── 工具（A 类，整目录）──
+#   benchmark_tools/ 是 vendored 第三方（google/benchmark 的 compare.py + gbench）；
+#   tidy_fix.bash 是脚手架自己的脚本。两者同类 —— 都是被别的入口调用的工具
+#   （bench_use --compare / .vscode/tasks.json），不指望用户手敲，所以合成一条。
 A  D   templates/tools                            tools
 
 # ── 编辑器配置 ──

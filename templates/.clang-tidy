@@ -88,6 +88,12 @@ CheckOptions:
   - key: readability-identifier-naming.GlobalFunctionCase
     value: lower_case
 
+  # 参数：snake_case
+  # 注意：必须设 ParameterCase。只设下面两个 Pointer/ReferenceParameterCase 是无效的，
+  #       参数会完全不被检查（实测：漏报 userName / firstValue / secondValue 等）。
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+
   # 指针 / 引用之类的修饰符对齐风格 (可选)
   - key: readability-identifier-naming.PointerParameterCase
     value: lower_case

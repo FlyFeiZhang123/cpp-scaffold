@@ -13,7 +13,7 @@
 | 依赖管理 | CPM.cmake + Conan          | conan 覆盖的走 conan；其余 CPM 一行拉取，CPM_SOURCE_CACHE 离线缓存 |
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
 | Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash`/`task_tracker.bash` 原生补全 |
-| 代码格式化 | clang-format + clang-tidy | 模板自带                               |
+| 代码格式化 | clang-format + clang-tidy | 模板自带；`tools/tidy_fix.bash` 一键套用命名规范 |
 | 单元测试 | GoogleTest               | CPM 自动获取（钉 v1.17.0），CPM_SOURCE_CACHE 离线缓存 |
 | 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
 | 任务追踪 | bash 脚本                | `./task_tracker.bash` 记录待办，附件/标签/统计，零依赖 |
@@ -41,7 +41,7 @@ cd ~/cpp-scaffold
 # 国内网络先换源（阿里云 + 清华双源，自动适配 x86_64/ARM64,如果需要的话）
 sudo ./scripts/setup_mirror.bash
 
-# 一键安装：gcc、cmake、ninja、clangd、conan、perf、FlameGraph 等
+# 一键安装：gcc、cmake、ninja、clangd、clang-tidy、conan、perf、FlameGraph 等
 ./setup_all.bash
 ```
 
@@ -99,7 +99,8 @@ my_project/
 │   ├── CPM.cmake              # CPM 依赖管理（vendored）
 │   └── Dependencies.cmake     # 依赖声明（CPM / conan / vendored）
 ├── tools/
-│   └── benchmark_tools/       # bench_use --compare 用的 compare.py + gbench
+│   ├── benchmark_tools/       # bench_use --compare 用的 compare.py + gbench
+│   └── tidy_fix.bash          # 命名规范一键套用（VS Code 任务也走它）
 ├── example/
 │   └── main.cpp
 ├── out/                      # 输出文件（perf / benchmark / heaptrack / logs）
@@ -279,7 +280,36 @@ heaptrack_print $(ls -t out/heaptrack/app.*.gz | head -1) | less
 
 ---
 
-### 7. 更新已有项目
+### 7. 代码规范修正
+
+`.clang-tidy` 里的命名规范（类 `CamelCase`、函数 `lower_case`、成员尾缀 `_`…）不用手工一条条改，`tools/tidy_fix.bash` 批量套用。**默认只报告，不动文件**：
+
+```bash
+./tools/tidy_fix.bash 'example/main'      # 只报告（安全，先跑这个）
+./tools/tidy_fix.bash -w 'example/main'   # 先列清单 → 确认 → 才改
+./tools/tidy_fix.bash -w --all 'tests/'   # 连 modernize/bugprone 一起改
+```
+
+第一个参数是**路径正则**，拿去匹配编译数据库里的 `.cpp`：
+
+| 写法               | 命中                                                     |
+| ------------------ | -------------------------------------------------------- |
+| `'example/main'`   | 单个编译单元                                             |
+| `'tests/'`         | 该目录下所有 `.cpp`                                      |
+| `'\.cpp$'`         | 全部编译单元                                             |
+| `'condition_var'`  | 没命中 `.cpp` 时当成**文件名**，只改这一个（头文件走这条） |
+
+`-w` 是两段式：先导出补丁 → **列出全部会被改的文件**给你看 → 你按 `y` 才落盘，改完还会对动过的那几行跑一遍 `clang-format`。改错了就 `git checkout -- <文件>`。
+
+> **头文件的边界**：`.clang-tidy` 的 `HeaderFilterRegex` 只管 `include/` 下的头。`src/`、`tests/` 下的头文件**不会被检查** —— 拿它们的名字去跑会得到「没有需要修的地方」，那是「没查」，不是「干净」。
+
+VS Code 里有两个现成任务（`Ctrl+Shift+P` → `Tasks: Run Task`）：**tidy: 检查（只报告）** 和 **tidy: 修复（写入）**，会弹框问你路径正则，警告直接进 Problems 面板，能点着跳。
+
+> 依赖 `run-clang-tidy` 和 `clang-apply-replacements`（来自 `clang-tidy` + `clang-tools` 包），`setup_all.bash` 装的 `basic_install.bash` 已包含。
+
+---
+
+### 8. 更新已有项目
 
 脚手架自己演进了（换了测试框架、改了编译脚本），已有项目想跟上：
 
@@ -336,8 +366,8 @@ rm CMakeLists.txt && newproj 你的项目名 你的可执行名
 cpp-scaffold/
 ├── scripts/                 # 安装脚本
 │   ├── setup_mirror.bash    #   apt 换源（阿里云主 + 清华副）
-│   ├── basic_install.bash   #   基础开发工具（gcc/cmake/gdb/clangd/valgrind）
-│   ├── extra_install.bash   #   额外工具（heaptrack/clang-tidy/iwyu）
+│   ├── basic_install.bash   #   基础开发工具（gcc/cmake/gdb/clangd/clang-tidy/valgrind）
+│   ├── extra_install.bash   #   额外工具（heaptrack 堆分析 + GUI）
 │   ├── conan_install.bash   #   Conan 2.x
 │   ├── perf_install.bash    #   perf + FlameGraph
 │   ├── scaffold_lib.bash    #   install/update 共用：读清单、取项目名
@@ -359,7 +389,8 @@ cpp-scaffold/
 │   ├── Doxyfile
 │   ├── example/
 │   ├── tools/
-│   │   └── benchmark_tools/  #   bench_use --compare 的 compare.py（vendored）
+│   │   ├── benchmark_tools/  #   bench_use --compare 的 compare.py（vendored）
+│   │   └── tidy_fix.bash     #   命名规范一键套用（脚手架自带脚本）
 │   ├── tests/
 │   │   ├── CMakeLists.txt
 │   │   ├── unit/test_main.cpp     #   GoogleTest 单元测试

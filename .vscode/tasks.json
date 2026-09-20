@@ -8,6 +8,36 @@
             "options": { "cwd": "${workspaceFolder}" },
             "group": { "kind": "build", "isDefault": true },
             "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            // 只报告，不改文件。警告会进 Problems 面板，可以点着跳。
+            "label": "tidy: 检查（只报告）",
+            "type": "shell",
+            "command": "./tools/tidy_fix.bash",
+            "args": ["${input:tidyTarget}"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            // 真改。会先列出「哪些文件会被改」，确认之后才动手。
+            "label": "tidy: 修复（写入）",
+            "type": "shell",
+            "command": "./tools/tidy_fix.bash",
+            "args": ["-w", "${input:tidyTarget}"],
+            "options": { "cwd": "${workspaceFolder}" },
+            "presentation": { "reveal": "always", "panel": "shared" },
+            "problemMatcher": ["$gcc"]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "tidyTarget",
+            "type": "promptString",
+            // 例: example/main | tests/ | \.cpp$ | condition_var（头文件名也行）
+            // 完整说明跑 ./tools/tidy_fix.bash -h
+            "description": "路径正则 —— 例: example/main | tests/ | \\.cpp$ | condition_var",
+            "default": "example/main"
         }
     ]
 }
