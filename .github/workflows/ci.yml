@@ -160,7 +160,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq cmake ninja-build libpfm4-dev
           if [ "${{ matrix.compiler }}" = "clang" ]; then
-            sudo apt-get install -y -qq clang
+            # libomp-dev 是 clang 的 OpenMP 运行时，不能省：gcc 的 -fopenmp 链 libgomp
+            # （随 gcc 一起进来），clang 链的是 LLVM 的 -lomp，不装这个包就是一句
+            # `ld: cannot find -lomp`。这个 job 第一次跑的时候 clang 腿正是这么挂的
+            # —— gcc 腿绿、clang 腿红，差别只在这一个包。
+            sudo apt-get install -y -qq clang libomp-dev
           fi
 
       - name: Setup compiler

@@ -27,6 +27,7 @@ Sanitizers:
 优化:
   lto                    启用链接时优化（默认 OFF）
   openmp / no-openmp     OpenMP 并行（默认 OFF，建议配合 release 使用）
+                         clang 需另装 libomp-dev；gcc 用自带的 libgomp，无需额外装
 
 构建:
   release / debug        构建类型（默认 Debug）
@@ -92,6 +93,24 @@ done
 # ===== 校验 =====
 [ ! -f "example/$EXECUTABLE_SRC" ] && echo "错误: example/$EXECUTABLE_SRC 不存在" && exit 1
 [ "$ENABLE_ASAN" = "ON" ] && [ "$ENABLE_TSAN" = "ON" ] && echo "错误: ASan 和 TSan 互斥" && exit 1
+
+# OpenMP 前置检查。clang 的 -fopenmp 链的是 LLVM 的 libomp（libomp-dev 包），gcc 链的是
+# 随 gcc 一起来的 libgomp —— 只有 clang 要额外装包。漏装时 clang 甩出来的是一句
+# `ld: cannot find -lomp`，看不出该装什么，所以这里先拿个空程序真链一次：比猜
+# /usr/lib/llvm-<版本>/lib/libomp.so 这种带版本号的路径靠谱，也不用去区分编译器。
+if [ "$ENABLE_OPENMP" = "ON" ]; then
+    _CXX="${CXX:-c++}"
+    # 编译器不在 PATH 里就不测了，交给 CMake 报它自己的错
+    if command -v "$_CXX" >/dev/null 2>&1 \
+       && ! printf 'int main(){}\n' | "$_CXX" -fopenmp -x c++ - -o /dev/null 2>/dev/null; then
+        echo "错误: $_CXX 链不上 -fopenmp"
+        case "$_CXX" in
+            *clang*) echo "      clang 的 OpenMP 运行时是 LLVM 的 libomp，要另装: sudo apt install libomp-dev" ;;
+            *)       echo "      gcc 自带 libgomp，链不上一般是工具链本身有问题" ;;
+        esac
+        exit 1
+    fi
+fi
 
 # ===== 构建目录 =====
 BUILD_DIR="build/${BUILD_TYPE,,}"
