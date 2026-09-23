@@ -1,6 +1,11 @@
 {
   "editor.formatOnSave": true,
-  "cmake.configureOnOpen": true,
+  // 构建统一走 ./my_build.bash（Ninja + ASAN → build/debug-asan/，build/ 根上是软链）。
+  // CMake Tools 只用来给 CMakeLists.txt 提供语法高亮和补全，不参与构建。
+  // configureOnOpen 之前是 true —— 每次打开文件夹都会自动 configure 出一套
+  // build/Debug（Makefiles、无 ASAN）并弹提示，已关掉。
+  // 下面两行在 CMakePresets 模式下本来就被忽略，且插件默认值就是 build/，删不删一样。
+  "cmake.configureOnOpen": false,
   "cmake.buildDirectory": "${workspaceFolder}/build",
   "cmake.generator": "Ninja",
   "cmake.configureSettings": {

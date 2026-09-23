@@ -47,10 +47,14 @@ echo ""
 
 # ---- 配置 ~/.bashrc（只写 BASE_SETTINGS_DIR + source 循环；别名等设置由 settings_use.bash 提供）----
 if ! grep -q "BASE_SETTINGS_DIR" ~/.bashrc 2>/dev/null; then
+    # 写进 .bashrc 的路径必须可移植：heredoc 不加引号，写 "${BASE_SETTINGS_DIR}"
+    # 会把当时的绝对路径冻进去（换机器/换用户名就断）。这里先把 $HOME 前缀
+    # 还原成字面量 $HOME，写出来才是 export BASE_SETTINGS_DIR="$HOME/cpp-scaffold"。
+    _write_dir="${BASE_SETTINGS_DIR/#"$HOME"/\$HOME}"
     cat >> ~/.bashrc << BASHRC_EOF
 
 # cpp-scaffold
-export BASE_SETTINGS_DIR="${BASE_SETTINGS_DIR}"
+export BASE_SETTINGS_DIR="${_write_dir}"
 
 # 补全 + 环境设置（settings_use.bash / my_build.bash / bench_use.bash / perf_use.bash / task_tracker.bash）
 for f in "\$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
