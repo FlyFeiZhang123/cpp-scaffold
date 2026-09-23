@@ -7,6 +7,8 @@ sudo apt update
 sudo apt install -y gcc g++ cmake ninja-build gdb
 # 语言服务器 + 格式化 + 自定义风格修正
 sudo apt install -y clangd clang-format clang-tidy
+# bash 脚本静态检查（脚手架自带 20+ 个 .bash/.sh，CI 的 lint job 用的是同一个）
+sudo apt install -y shellcheck
 # 内存泄漏 / cache miss / 堆分析
 sudo apt install -y valgrind
 # 文档生成 + 调用图
@@ -21,9 +23,10 @@ ccache --max-size=10G
 
 echo ""
 echo "=== 验证安装 ==="
-cmake  --version | head -1
-g++    --version | head -1
-clangd --version | head -1
-valgrind --version | head -1
+cmake      --version | head -1
+g++        --version | head -1
+clangd     --version | head -1
+valgrind   --version | head -1
+shellcheck --version | grep version:
 echo ""
 echo "✅ 基础工具安装完成"

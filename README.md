@@ -14,6 +14,7 @@
 | 代码补全 | clangd                   | VS Code / Zed 配置已内置                |
 | Tab 补全 | bash completion          | `my_build.bash`/`bench_use.bash`/`perf_use.bash`/`task_tracker.bash` 原生补全 |
 | 代码格式化 | clang-format + clang-tidy | 模板自带；`tools/tidy_fix.bash` 一键套用命名规范 |
+| 脚本检查 | shellcheck               | 自带的 bash 脚本静态检查，`--severity=warning` 零告警（CI 的 lint job 同款） |
 | 单元测试 | GoogleTest               | CPM 自动获取（钉 v1.17.0），CPM_SOURCE_CACHE 离线缓存 |
 | 性能基准 | Google Benchmark         | `./bench_use.bash` 一键跑分，PMU 硬件计数器 |
 | 任务追踪 | bash 脚本                | `./task_tracker.bash` 记录待办，附件/标签/统计，零依赖 |

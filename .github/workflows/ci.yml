@@ -14,7 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [gcc, clang]
-        sanitizer: [ASan, UBSan, None]
+        # TSan 是后加的：消毒剂组合属于「参数解析层」的 bug，只有真跑那个组合才抓得到。
+        # 加它之前 ./my_build.bash tsan 是直接失败的（ASan 默认 ON，而 tsan) 不关它，
+        # 一敲就撞上「ASan 和 TSan 互斥」）—— README 教的就是这条命令。
+        sanitizer: [ASan, UBSan, TSan, None]
 
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +57,7 @@ jobs:
           case "${{ matrix.sanitizer }}" in
             ASan)  ./my_build.bash debug asan    test ;;
             UBSan) ./my_build.bash debug no-asan ubsan test ;;
+            TSan)  ./my_build.bash debug tsan    test ;;
             None)  ./my_build.bash debug no-asan test ;;
           esac
           test -x build/app
@@ -129,3 +133,96 @@ jobs:
 
       - name: Run scaffold self-test (含 Conan 集成)
         run: ./scripts/scaffold_test.bash
+
+  # 上面的矩阵跑的全是 debug（ASan / UBSan / TSan / None 都只是消毒剂轴，BuildType 一直是
+  # Debug），scaffold 自测第 4 节也是 debug —— 于是 my_build.bash 头注释和 README 都宣传的
+  # release / lto / openmp 这三条路，从写下那天起一次都没被构建过。
+  #
+  # 本机实测它们能跑通（-O3 -DNDEBUG、零 -fsanitize、软链接指进 build/release/），但那只是
+  # 「那天在那一台机器上」。这个 job 把它钉住。
+  #
+  # 三个开关一次带上，各腿并行、墙钟成本 ≈ 0；真失败时从命令行里逐个摘掉即可定位。
+  # 断言的重点不是「它跑完了」，而是「它真的是 Release」—— 只看退出码的话，
+  # `release)` 那行被人改成 Debug 也照样绿。
+  release:
+    name: "release | ${{ matrix.compiler }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build libpfm4-dev
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            sudo apt-get install -y -qq clang
+          fi
+
+      - name: Setup compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang"   >> $GITHUB_ENV
+            echo "CXX=clang++" >> $GITHUB_ENV
+          else
+            echo "CC=gcc"     >> $GITHUB_ENV
+            echo "CXX=g++"    >> $GITHUB_ENV
+          fi
+
+      - name: Generate test project from scaffold
+        run: |
+          export BASE_SETTINGS_DIR="${{ github.workspace }}"
+          mkdir /tmp/test_project
+          cd /tmp/test_project
+          bash "$BASE_SETTINGS_DIR/install.bash" test_project test_app
+
+      - name: Build + Test (Release + LTO + OpenMP)
+        working-directory: /tmp/test_project
+        run: |
+          ./my_build.bash release no-asan no-perf lto openmp test
+          test -x build/app
+          test -x build/test
+          test -x build/bench
+          # 软链接得指进 build/release/：指向 debug 说明 BUILD_TYPE 没生效，而这
+          # 单看退出码 0 是看不出来的（debug 也能构建、也能过测试）
+          readlink build/test | grep -q 'build/release/'
+          # 编译选项层面的证据：-O3 -DNDEBUG 说明是 Release，
+          # -flto / -fopenmp 说明那两个开关真的落成了编译选项而不是被静默忽略
+          grep -q -- '-DNDEBUG'  build/compile_commands.json
+          grep -q -- '-O3'       build/compile_commands.json
+          grep -q -- '-flto'     build/compile_commands.json
+          grep -q -- '-fopenmp'  build/compile_commands.json
+          # Release 不该夹带消毒剂
+          ! grep -q -- '-fsanitize' build/compile_commands.json
+
+  # 全仓库 20 个 .bash + 1 个 .sh，此前没有任何静态检查。加这个 job 的当天就抓到两条真
+  # 问题：.vscode/sudo_gdb.sh 的 shebang 被一个空行挤到第二行（SC1128，error 级，而该文件
+  # 带可执行位、由 VS Code 调试器直接 spawn），以及三个补全脚本用 COMPREPLY=($(compgen ...))
+  # 把带空格的目录名切成两条。
+  #
+  # 门禁定在 --severity=warning：note 级那 33 条几乎全是 SC2015（`A && B || C` 不是
+  # if-then-else），正是 scaffold_test.bash 里 `ok ... || bad ...` 的惯用法，ok 恒返回 0，
+  # 语义安全，不值得为它把每条断言改写成 if。
+  #
+  # 不钉版本：ubuntu-latest 的 apt 给 0.9.0，实测它与 0.11.0 对这份代码报的条目完全一致，
+  # 钉版本只是无谓复杂度。用 git ls-files 而不是 find：新增脚本自动进范围，也不会扫到 .git。
+  # '*.sh' 不能漏 —— sudo_gdb.sh 不叫 .bash，只扫 *.bash 时那条 error 是看不见的。
+  lint:
+    name: "shellcheck"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          shellcheck --version
+
+      - name: ShellCheck
+        run: shellcheck --severity=warning -f gcc $(git ls-files '*.bash' '*.sh')
