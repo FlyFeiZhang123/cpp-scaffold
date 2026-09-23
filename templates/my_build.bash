@@ -5,7 +5,7 @@
 #   ./my_build.bash release                # Release 构建
 #   ./my_build.bash asan perf              # 显式开启
 #   ./my_build.bash tsan no-perf           # TSan + 关帧指针
-#   ./my_build.bash no-asan no-perf lto    # 纯 Release 无 sanitizer
+#   ./my_build.bash release no-asan no-perf lto  # Release + LTO（lto 不改构建类型，要自己带 release）
 #   ./my_build.bash -j4                     # 限制并发编译数（树莓派推荐）
 #   ./my_build.bash --exe-src=other.cpp     # 切换编译目标（CMake缓存记录，后续无需再传）
 #   ./my_build.bash --exe-src=placeholder.cpp test
@@ -17,7 +17,7 @@ usage() {
 用法: $0 [选项...]
 
 Sanitizers:
-  asan, tsan, ubsan     启用对应 sanitizer
+  asan, tsan, ubsan     启用对应 sanitizer（tsan 会自动关掉 asan，两者互斥）
   no-asan, no-tsan      关闭（默认 ASAN=ON）
 
 性能分析:
@@ -60,7 +60,7 @@ for arg in "$@"; do
     case "$arg" in
         asan)       ENABLE_ASAN=ON     ;;
         no-asan)    ENABLE_ASAN=OFF    ;;
-        tsan)       ENABLE_TSAN=ON     ;;
+        tsan)       ENABLE_TSAN=ON; ENABLE_ASAN=OFF ;;   # 两者互斥，选 tsan 即意味着不要 asan
         no-tsan)    ENABLE_TSAN=OFF    ;;
         ubsan)      ENABLE_UBSAN=ON    ;;
         valgrind)   USE_FOR_VALGRIND=ON ;;

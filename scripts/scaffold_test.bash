@@ -160,6 +160,7 @@ check_link build/bench
 check_link build/compile_commands.json
 
 # 软链接能执行才算数（build/test 断链或指错是历史 bug）
+# shellcheck disable=SC2065  # 命令名恰好叫 test，被当成 test 内建命令了；有 ./ 前缀就是路径
 if [ -x build/test ] && ./build/test > /dev/null 2>&1; then
     ok "build/test 可直接执行且用例全过"
 else

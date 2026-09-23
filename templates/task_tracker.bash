@@ -70,7 +70,8 @@ task_status() {
     local s
     s="$(grep -m1 '^- STATUS:' "$1" 2>/dev/null | sed 's/^- STATUS:[[:space:]]*//')"
     s="$(printf '%s' "$s" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
-    [[ "$s" == closed || "$s" == done ]] && s="close"
+    # done 是 shell 关键字，当字面量比较时必须加引号（否则 SC1010）
+    [[ "$s" == "closed" || "$s" == "done" ]] && s="close"
     printf '%s' "${s:-open}"
 }
 

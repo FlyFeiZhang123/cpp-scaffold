@@ -1,4 +1,7 @@
 # bash completion for my_build.bash
+#
+# 用 mapfile 而不是 COMPREPLY=($(compgen ...))：后者按空白切分，目录/文件名里带空格
+# 会被切成两条；mapfile 按行读，原样保留。example/ 下的 .cpp 文件名同理。
 _my_build() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -34,7 +37,7 @@ _my_build() {
         *--exe-src=*)
             local prefix="${line##*--exe-src=}"
             if [ -d example ]; then
-                COMPREPLY=($(cd example && compgen -f -- "$prefix" | grep '\.cpp$'))
+                mapfile -t COMPREPLY < <(cd example && compgen -f -- "$prefix" | grep '\.cpp$')
             fi
             return
             ;;
@@ -42,7 +45,7 @@ _my_build() {
 
     # ── --exe-src xxx（= 被 bash 消耗，prev 变 --exe-src）──
     if [[ "$prev" == "--exe-src" ]]; then
-        [ -d example ] && COMPREPLY=($(cd example && compgen -f -- "$cur" | grep '\.cpp$'))
+        [ -d example ] && mapfile -t COMPREPLY < <(cd example && compgen -f -- "$cur" | grep '\.cpp$')
         return
     fi
 
@@ -50,6 +53,6 @@ _my_build() {
     [[ "$cur" == -j* ]] && { COMPREPLY=(); return; }
 
     # ── 选项补全 ──
-    COMPREPLY=($(compgen -W "$opts" -- "$cur"))
+    mapfile -t COMPREPLY < <(compgen -W "$opts" -- "$cur")
 }
 complete -F _my_build my_build.bash ./my_build.bash

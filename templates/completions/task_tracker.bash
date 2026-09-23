@@ -27,6 +27,7 @@ _task_tracker_complete_shim() {
         # --completion 的输出里带一行 `complete -F` 注册，会把 shim 自己的注册顶掉，
         # 所以 source 完要再注册一次，把控制权抢回来。
         # 用 bash 显式调用，免得脚本没有可执行位就整个失效。
+        # shellcheck source=/dev/null  # 源是 <(...) 进程替换，内容运行时才生成，静态跟不了
         if source <(bash "$r" --completion 2>/dev/null); then
             _tt_stamp="$r|$st"
             complete -F _task_tracker_complete_shim task_tracker.bash ./task_tracker.bash

@@ -87,6 +87,7 @@ SC_TAG_W=3                      # [未触碰] [已覆盖] [已新增] 是最长�
 SC_TAG_COL=$(( SC_IND + 1 + SC_TAG_W * 2 + 1 + 1 ))
 SC_PAD="$(printf '%*s' "$SC_IND" '')"
 SC_BODY_PAD="$(printf '%*s' "$SC_TAG_COL" '')"
+# shellcheck disable=SC2034  # 不是没用：scripts/update.bash source 本文件后用，跨文件看不出来
 SC_RULE="━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 标签不足 SC_TAG_W 个汉字时补空格，让正文落在同一列。

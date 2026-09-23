@@ -53,7 +53,9 @@ find_bench_bin() {
     # 优先软链接
     [ -x "build/bench" ] && echo "build/bench" && return
     # 从构建目录搜
-    local exe=$(find build -maxdepth 4 -name '*_benchmark' -type f -executable 2>/dev/null | head -1)
+    # 拆开写：`local exe=$(...)` 会把命令替换的退出码吞掉（SC2155）
+    local exe
+    exe=$(find build -maxdepth 4 -name '*_benchmark' -type f -executable 2>/dev/null | head -1)
     [ -n "$exe" ] && echo "$exe" && return
     echo ""
 }

@@ -30,7 +30,9 @@ esac
 backup_file() {
     local f="$1"
     if [ -f "$f" ]; then
-        local bak="/etc/apt/$(basename "$f").bak.$(date +%Y%m%d_%H%M%S)"
+        # 拆开写：`local bak=$(...)` 会把命令替换的退出码吞掉，出错也当成功（SC2155）
+        local bak
+        bak="/etc/apt/$(basename "$f").bak.$(date +%Y%m%d_%H%M%S)"
         sudo cp "$f" "$bak"
         echo "  已备份: $f -> $bak"
     fi

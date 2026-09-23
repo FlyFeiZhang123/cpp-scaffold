@@ -64,6 +64,7 @@ BASHRC_EOF
     echo "✅ 已配置 ~/.bashrc（BASE_SETTINGS_DIR + source 循环）"
     echo "   执行 source ~/.bashrc 后生效"
 else
+    # shellcheck disable=SC2088  # 只是给用户看的提示文本，不是路径，故意保留 ~ 的写法
     echo "~/.bashrc 已有基础配置，跳过"
     if ! grep -q "completions" ~/.bashrc 2>/dev/null; then
         cat >> ~/.bashrc << BASHRC_EOF
