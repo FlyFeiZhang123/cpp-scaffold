@@ -3,8 +3,9 @@
 #  scaffold_test.bash —— 脚手架自测
 #
 #  测的是「脚手架本身」：install.bash 生成出来的项目能不能编、能不能过
-#  ctest、软链接对不对、task_tracker 能不能用、update.bash 有没有守约
-#  （A 覆盖 / B 不碰 / C 只报不写 / dry-run 零写入）。CI 跑它，本地也能随时跑。
+#  ctest、软链接对不对、conan 工具链接没接上、task_tracker 能不能用、
+#  update.bash 有没有守约（A 覆盖 / B 不碰 / C 只报不写 / dry-run 零写入）。
+#  CI 跑它，本地也能随时跑。
 #
 #  为什么需要它：CI 原先直接调 cmake，绕过了 my_build.bash —— 而
 #  build/app、build/test、build/bench 三个软链接正是 my_build.bash 建的。
@@ -63,7 +64,7 @@ trap cleanup EXIT
 printf '脚手架自测  模板目录: %s\n' "$BASE_SETTINGS_DIR"
 
 # ---------- 1. 模板静态检查（最便宜的一层，先挡住语法错误）----------
-section "1/6 模板脚本语法"
+section "1/7 模板脚本语法"
 for f in "$BASE_SETTINGS_DIR"/templates/*.bash "$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
     [ -f "$f" ] || continue
     if bash -n "$f" 2>/dev/null; then ok "$(basename "$f") 语法 OK"
@@ -113,7 +114,7 @@ for pair in "覆盖:未触碰" "新增:已覆盖" "差异:已新增"; do
 done
 
 # ---------- 2. 生成项目 ----------
-section "2/6 生成项目（install.bash）"
+section "2/7 生成项目（install.bash）"
 cd "$WORK" || exit 1
 if bash "$BASE_SETTINGS_DIR/install.bash" test_project test_app y v > "$WORK/gen.log" 2>&1; then
     ok "install.bash 退出 0"
@@ -122,7 +123,7 @@ else
     printf '\n生成都失败了，后面没意义。\n'; exit 1
 fi
 
-section "3/6 生成物结构"
+section "3/7 生成物结构"
 for f in CMakeLists.txt conanfile.txt .gitignore .clang-format .clang-tidy Doxyfile \
          my_build.bash perf_use.bash bench_use.bash task_tracker.bash \
          cmake/CPM.cmake cmake/Dependencies.cmake \
@@ -145,7 +146,7 @@ grep -q '^set(EXECUTABLE_NAME test_app)' CMakeLists.txt \
     && ok "EXECUTABLE_NAME = test_app" || bad "EXECUTABLE_NAME 没替换对"
 
 # ---------- 4. 构建 + 测试（走 my_build.bash 真实入口）----------
-section "4/6 构建与测试（my_build.bash test）"
+section "4/7 构建与测试（my_build.bash test）"
 if ./my_build.bash test > "$WORK/build.log" 2>&1; then
     ok "my_build.bash test 退出 0（编译 + ctest）"
 else
@@ -180,8 +181,36 @@ else
     bad "ctest 未全绿"; grep -E 'tests passed|Failed|failed' "$WORK/build.log" | tail -10 | sed 's/^/     /'
 fi
 
-# ---------- 5. 任务追踪冒烟 ----------
-section "5/6 任务追踪（task_tracker.bash）"
+# ---------- 5. Conan 集成（装了 conan 才跑）----------
+# 这条路的触发条件是「装了 conan」+「项目里有 conanfile.txt」，而 conanfile.txt
+# 只在 newproj 带 y 时才生成（第 2 节用的正是 y）。所以本机装了 conan 的话，第 4 节
+# 那个 my_build.bash 其实已经走过这条路了 —— 这一节只是把结果验出来。CI 里单独
+# 有个装 conan 的 job，就是为了让这一段真的跑起来而不是一路跳过。
+section "5/7 Conan 集成"
+if command -v conan >/dev/null 2>&1; then
+    ok "检测到 conan（$(conan --version 2>/dev/null)）"
+    # 装了却没进分支 = PATH 断了（conan 落在 ~/.local/bin，该目录未必在 PATH 上）。
+    # 光看文件在不在不够，得确认分支真的进了。
+    grep -q '检测到 Conan' "$WORK/build.log" \
+        && ok "my_build.bash 走进了 conan 分支" \
+        || bad "装了 conan 但 my_build.bash 没进 conan 分支（查 PATH）"
+    # 【隐式契约】my_build.bash 第 127 行写死 build/<BuildType>/generators/：大写 Debug
+    # 是 Conan cmake_layout 的拼法，与构建目录 build/debug-asan（BUILD_DIR 走了 ${VAR,,}
+    # 转小写）故意不一致，全靠两边凑巧对上。
+    check_file "build/Debug/generators/conan_toolchain.cmake"
+    # 下面这条不是重复 —— 两条各管一头，实测过：把第 127 行改成小写之后，上面那条
+    # 仍然 ✅（Conan 按自己的布局把工具链写在那儿，本来就该在），是下面这条报的红。
+    #   check_file  → conan 侧布局变了 / 分支根本没进（PATH 断了文件就不会出现）
+    #   下面这条    → 我们侧路径拼错了，工具链在但 CMake 没拿到
+    grep -q 'CMAKE_TOOLCHAIN_FILE.*conan_toolchain' build/debug-asan/CMakeCache.txt 2>/dev/null \
+        && ok "CMake 真的采用了 conan 工具链（CMakeCache 有记录）" \
+        || bad "工具链生成了却没被 CMake 采用"
+else
+    printf '  ⏭ 跳过（本机没装 conan）—— CI 的 conan job 会跑这一段\n'
+fi
+
+# ---------- 6. 任务追踪冒烟 ----------
+section "6/7 任务追踪（task_tracker.bash）"
 if ./task_tracker.bash -m "冒烟任务" --tag smoke > /dev/null 2>&1; then
     ok "-m 建任务"
 else
@@ -220,10 +249,10 @@ else
     bad "--completion 输出有语法错误"
 fi
 
-# ---------- 6. 更新机制（scripts/update.bash）----------
+# ---------- 7. 更新机制（scripts/update.bash）----------
 # 这里验的是「承诺」而不是「跑过了」：A 覆盖、B 不碰、C 只报不写、dry-run 零写入。
 # 任何一条失守，用户的项目就会被静默改坏 —— 所以每条都拿 md5 对。
-section "6/6 更新机制（update.bash）"
+section "7/7 更新机制（update.bash）"
 UPDATE_BASH="$BASE_SETTINGS_DIR/scripts/update.bash"
 md5_of() { md5sum -- "$1" | cut -d' ' -f1; }
 

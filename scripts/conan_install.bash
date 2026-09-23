@@ -29,5 +29,15 @@ fi
 
 uv tool install conan
 
+# uv 装完 shim 落在 ~/.local/bin，但那目录未必在当前 PATH 里 —— 上面那段 PATH 补丁
+# 只在「uv 也是本次新装」时才跑。以前这里直接就打印 ✅，于是「装上了但找不到」
+# 也照样退出 0，等用户敲 conan 时才发现。basic_install.bash 有验证块，这里补上。
+_TOOL_BIN="${UV_TOOL_BIN_DIR:-$HOME/.local/bin}"
+export PATH="$_TOOL_BIN:$PATH"
+if ! command -v conan &>/dev/null; then
+    echo "错误: conan 装好了但不在 PATH 上（试 $_TOOL_BIN/conan）" >&2
+    exit 1
+fi
+
 echo ""
-echo "✅ Conan 安装完成"
+echo "✅ Conan 安装完成: $(conan --version)"

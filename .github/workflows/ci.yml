@@ -77,3 +77,55 @@ jobs:
 
       - name: Run scaffold self-test
         run: ./scripts/scaffold_test.bash
+
+  # 矩阵管 gcc/clang × 消毒剂，scaffold 管整套流程 —— 但两者都没装 conan，于是
+  # newproj 的 y 参数（生成 conanfile.txt）和 my_build.bash 的 conan 工具链这条路径
+  # 在 CI 里从来是死的：conanfile.txt 生成了没人消化，工具链一次没建过。这不是故意
+  # 跳过，而是「本机装了 conan 所以本地能跑、CI 没装所以跑不到」的盲区。
+  #
+  # 这个 job 装 conan 并把脚手架自测跑一遍，让 scaffold_test.bash 第 5 节真的执行。
+  # 它钉住的是一个隐式契约：my_build.bash 写死 build/Debug/generators/ —— 大写
+  # Debug 来自 Conan 的 cmake_layout，与构建目录 build/debug-asan 故意不一致。
+  # 两腿并行，墙钟成本为零；clang 腿另有价值：conan profile detect 会读 CC/CXX。
+  conan:
+    name: "conan | ${{ matrix.compiler }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build libpfm4-dev
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            sudo apt-get install -y -qq clang
+          fi
+
+      - name: Setup compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang"   >> $GITHUB_ENV
+            echo "CXX=clang++" >> $GITHUB_ENV
+          else
+            echo "CC=gcc"     >> $GITHUB_ENV
+            echo "CXX=g++"    >> $GITHUB_ENV
+          fi
+
+      # 走仓库自己的安装脚本（顺带把 scripts/conan_install.bash 也验了 —— 它此前
+      # 没有任何测试）。conan 落在 ~/.local/bin，该目录默认不在 CI 的 PATH 上，而
+      # my_build.bash 靠 `command -v conan` 决定走不走 conan —— 漏了 GITHUB_PATH
+      # 就会静默跳过整条分支，测试照样绿。所以下面两行都不能省。
+      - name: Install conan
+        run: |
+          ./scripts/conan_install.bash
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"   # GITHUB_PATH 下一个 step 才生效
+          conan --version
+
+      - name: Run scaffold self-test (含 Conan 集成)
+        run: ./scripts/scaffold_test.bash
