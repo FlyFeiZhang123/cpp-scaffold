@@ -46,6 +46,22 @@ echo "============================================"
 echo ""
 
 # ---- 配置 ~/.bashrc（只写 BASE_SETTINGS_DIR + source 循环；别名等设置由 settings_use.bash 提供）----
+
+# 追加补全的 source 循环。用带引号的 heredoc 让 $BASE_SETTINGS_DIR 原样写进去、运行时才
+# 展开 —— 不加引号会在安装时就把绝对路径冻死，换机器/换用户名即断。
+#
+# 这段循环有两个写入点（全新安装、以及已有 .bashrc 时补写），所以只定义一次：抄两遍的
+# 话，以后补全目录一变就得记得改两处，而漏掉的那处只在「老 .bashrc」上才现形。
+_append_completions_loop() {
+    cat <<'BASHRC_EOF'
+
+# cpp-scaffold — 补全 + 环境设置（settings_use / my_build / bench_use / perf_use / task_tracker）
+for f in "$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
+    [ -f "$f" ] && source "$f"
+done
+BASHRC_EOF
+}
+
 if ! grep -q "BASE_SETTINGS_DIR" ~/.bashrc 2>/dev/null; then
     # 写进 .bashrc 的路径必须可移植：heredoc 不加引号，写 "${BASE_SETTINGS_DIR}"
     # 会把当时的绝对路径冻进去（换机器/换用户名就断）。这里先把 $HOME 前缀
@@ -55,25 +71,15 @@ if ! grep -q "BASE_SETTINGS_DIR" ~/.bashrc 2>/dev/null; then
 
 # cpp-scaffold
 export BASE_SETTINGS_DIR="${_write_dir}"
-
-# 补全 + 环境设置（settings_use.bash / my_build.bash / bench_use.bash / perf_use.bash / task_tracker.bash）
-for f in "\$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
-    [ -f "\$f" ] && source "\$f"
-done
 BASHRC_EOF
+    _append_completions_loop >> ~/.bashrc
     echo "✅ 已配置 ~/.bashrc（BASE_SETTINGS_DIR + source 循环）"
     echo "   执行 source ~/.bashrc 后生效"
 else
     # shellcheck disable=SC2088  # 只是给用户看的提示文本，不是路径，故意保留 ~ 的写法
     echo "~/.bashrc 已有基础配置，跳过"
     if ! grep -q "completions" ~/.bashrc 2>/dev/null; then
-        cat >> ~/.bashrc << BASHRC_EOF
-
-# cpp-scaffold — source 循环（补全 + 环境设置）
-for f in "\$BASE_SETTINGS_DIR"/templates/completions/*.bash; do
-    [ -f "\$f" ] && source "\$f"
-done
-BASHRC_EOF
+        _append_completions_loop >> ~/.bashrc
         echo "   ↳ 已补写 source 循环配置"
     fi
 fi

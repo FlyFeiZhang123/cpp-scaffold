@@ -1,7 +1,5 @@
 # bash completion for my_build.bash
-#
-# 用 mapfile 而不是 COMPREPLY=($(compgen ...))：后者按空白切分，目录/文件名里带空格
-# 会被切成两条；mapfile 按行读，原样保留。example/ 下的 .cpp 文件名同理。
+# 共用的 _sc_* 动作在 completion_lib.bash（同目录，由 ~/.bashrc 的循环一并加载）
 _my_build() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -27,7 +25,7 @@ _my_build() {
         done
         if (( unique )); then
             COMPREPLY=("--exe-src=")
-            compopt -o nospace 2>/dev/null
+            _sc_nospace
             return
         fi
     fi
@@ -35,17 +33,14 @@ _my_build() {
     # ── --exe-src=xxx 文件补全（用原始命令行，绕过 = 切分）──
     case "$line" in
         *--exe-src=*)
-            local prefix="${line##*--exe-src=}"
-            if [ -d example ]; then
-                mapfile -t COMPREPLY < <(cd example && compgen -f -- "$prefix" | grep '\.cpp$')
-            fi
+            _sc_files "example" '\.cpp$' "${line##*--exe-src=}"
             return
             ;;
     esac
 
     # ── --exe-src xxx（= 被 bash 消耗，prev 变 --exe-src）──
     if [[ "$prev" == "--exe-src" ]]; then
-        [ -d example ] && mapfile -t COMPREPLY < <(cd example && compgen -f -- "$cur" | grep '\.cpp$')
+        _sc_files "example" '\.cpp$' "$cur"
         return
     fi
 
@@ -53,6 +48,6 @@ _my_build() {
     [[ "$cur" == -j* ]] && { COMPREPLY=(); return; }
 
     # ── 选项补全 ──
-    mapfile -t COMPREPLY < <(compgen -W "$opts" -- "$cur")
+    _sc_words "$opts" "$cur"
 }
 complete -F _my_build my_build.bash ./my_build.bash
