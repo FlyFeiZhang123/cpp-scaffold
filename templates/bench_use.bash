@@ -106,7 +106,7 @@ fi
 # Debug 模式含 sanitizer + 无优化，计时无参考意义
 if echo "$BENCH_BIN" | grep -qi "debug\|asan\|tsan\|ubsan"; then
     echo "⚠  检测到 Debug/Sanitizer 构建（计时偏大，仅适合验证功能）"
-    echo "   建议: ./my_build.bash release no-asan && ./bench_use.bash"
+    echo "   建议: ./my_build.bash release && ./bench_use.bash"
     echo ""
 fi
 

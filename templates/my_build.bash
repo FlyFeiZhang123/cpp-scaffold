@@ -1,15 +1,15 @@
 #!/bin/bash
 # 用法: ./my_build.bash [选项...]
 # 示例:
-#   ./my_build.bash                        # 默认: Debug + ASAN + perf
+#   ./my_build.bash                        # 默认: Debug + perf（sanitizer 全关）
 #   ./my_build.bash release                # Release 构建
 #   ./my_build.bash asan perf              # 显式开启
 #   ./my_build.bash tsan no-perf           # TSan + 关帧指针
-#   ./my_build.bash release no-asan no-perf lto  # Release + LTO（lto 不改构建类型，要自己带 release）
+#   ./my_build.bash release no-perf lto     # Release + LTO（lto 不改构建类型，要自己带 release）
 #   ./my_build.bash -j4                     # 限制并发编译数（树莓派推荐）
 #   ./my_build.bash --exe-src=other.cpp     # 切换编译目标（CMake缓存记录，后续无需再传）
 #   ./my_build.bash --exe-src=placeholder.cpp test
-#   ./my_build.bash no-march               # WSL2 用
+#   ./my_build.bash march                  # 本机自编自跑时打开 -march=native
 set -e
 
 usage() {
@@ -18,11 +18,11 @@ usage() {
 
 Sanitizers:
   asan, tsan, ubsan     启用对应 sanitizer（tsan 会自动关掉 asan，两者互斥）
-  no-asan, no-tsan      关闭（默认 ASAN=ON）
+  no-asan, no-tsan      关闭（默认全关，带不带都行）
 
 性能分析:
   perf / no-perf         帧指针开关（默认 perf=ON）
-  march / no-march       -march=native 开关（默认 ON，WSL2 用 no-march）
+  march / no-march       -march=native 开关（默认 OFF；产物要跨机器分发就别开）
 
 优化:
   lto                    启用链接时优化（默认 OFF）
@@ -43,11 +43,15 @@ EOF
 
 # ===== 默认值 =====
 BUILD_TYPE="Debug"
-ENABLE_ASAN=ON
+# 默认全关 sanitizer：ASan 让每次运行慢 2-3 倍，拿它当默认值会吃掉「敲一下就跑」的体感，
+# 而它只是个调试开关。要查内存/并发问题时敲 asan / tsan / ubsan。
+ENABLE_ASAN=OFF
 ENABLE_TSAN=OFF
 ENABLE_UBSAN=OFF
 ENABLE_PERF=ON
-USE_MARCH_NATIVE=ON
+# 默认关 -march=native：开了产物就绑死本机 CPU，换台机器跑、或在 VM/容器里编拿到宿主机
+# 上跑，都会直接 SIGILL。本机自编自跑时敲 march 打开，白赚性能。
+USE_MARCH_NATIVE=OFF
 ENABLE_LTO=OFF
 ENABLE_OPENMP=OFF
 USE_FOR_VALGRIND=OFF

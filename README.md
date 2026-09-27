@@ -136,11 +136,11 @@ my_project/
 ```bash
 cd my_project
 
-# 默认 Debug + ASan + 帧指针
+# 默认 Debug + 帧指针（sanitizer 全关）
 ./my_build.bash
 
-# Release + 关闭 sanitizer
-./my_build.bash release no-asan
+# Release
+./my_build.bash release
 
 # ThreadSanitizer
 ./my_build.bash tsan
@@ -152,14 +152,14 @@ cd my_project
 cmake -B build -DBUILD_BENCHMARKS=OFF .
 ./my_build.bash
 
-# WSL2 关闭 -march=native
-./my_build.bash no-march
+# 本机自编自跑时打开 -march=native（默认关：产物要跨机器分发就别开）
+./my_build.bash march
 
 # 链接时优化
 ./my_build.bash release lto
 
 # OpenMP 并行（建议配合 release + -O3 使用）
-./my_build.bash release no-asan openmp
+./my_build.bash release openmp
 
 # 指定入口文件
 ./my_build.bash --exe-src=main.cpp
@@ -346,11 +346,11 @@ rm CMakeLists.txt && newproj 你的项目名 你的可执行名
 
 | 参数                | 效果                                   |
 | ------------------- | -------------------------------------- |
-| `asan` / `no-asan`  | 开启/关闭 AddressSanitizer（默认开）   |
+| `asan` / `no-asan`  | 开启/关闭 AddressSanitizer（默认关）   |
 | `tsan`              | 开启 ThreadSanitizer（与 asan 互斥）   |
 | `ubsan`             | 开启 UndefinedBehaviorSanitizer        |
 | `perf` / `no-perf`  | 帧指针开关（默认开，火焰图需要）       |
-| `march` / `no-march`| -march=native 开关（默认开）           |
+| `march` / `no-march`| -march=native 开关（默认关）           |
 | `lto`               | 启用链接时优化                         |
 | `openmp` / `no-openmp` | OpenMP 并行（默认关，建议配合 release） |
 | `valgrind`          | 生成 dwarf-4 调试信息（兼容 Valgrind） |

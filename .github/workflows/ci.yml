@@ -15,8 +15,9 @@ jobs:
       matrix:
         compiler: [gcc, clang]
         # TSan 是后加的：消毒剂组合属于「参数解析层」的 bug，只有真跑那个组合才抓得到。
-        # 加它之前 ./my_build.bash tsan 是直接失败的（ASan 默认 ON，而 tsan) 不关它，
+        # 加它之前 ./my_build.bash tsan 是直接失败的（当时 ASan 默认 ON，而 tsan) 不关它，
         # 一敲就撞上「ASan 和 TSan 互斥」）—— README 教的就是这条命令。
+        # 各腿一律显式写全开关，不吃默认值：这样以后默认值再变，测的还是同一件事。
         sanitizer: [ASan, UBSan, TSan, None]
 
     steps:
@@ -89,7 +90,7 @@ jobs:
   #
   # 这个 job 装 conan 并把脚手架自测跑一遍，让 scaffold_test.bash 第 5 节真的执行。
   # 它钉住的是一个隐式契约：my_build.bash 写死 build/Debug/generators/ —— 大写
-  # Debug 来自 Conan 的 cmake_layout，与构建目录 build/debug-asan 故意不一致。
+  # Debug 来自 Conan 的 cmake_layout，与构建目录 build/debug（默认不开 sanitizer 就没后缀）故意不一致。
   # 两腿并行，墙钟成本为零；clang 腿另有价值：conan profile detect 会读 CC/CXX。
   conan:
     name: "conan | ${{ matrix.compiler }}"

@@ -195,15 +195,18 @@ if command -v conan >/dev/null 2>&1; then
     grep -q '检测到 Conan' "$WORK/build.log" \
         && ok "my_build.bash 走进了 conan 分支" \
         || bad "装了 conan 但 my_build.bash 没进 conan 分支（查 PATH）"
-    # 【隐式契约】my_build.bash 第 127 行写死 build/<BuildType>/generators/：大写 Debug
-    # 是 Conan cmake_layout 的拼法，与构建目录 build/debug-asan（BUILD_DIR 走了 ${VAR,,}
-    # 转小写）故意不一致，全靠两边凑巧对上。
+    # 【隐式契约】my_build.bash 里写死 build/<BuildType>/generators/：大写 Debug 是
+    # Conan cmake_layout 的拼法，与构建目录（BUILD_DIR 走了 ${VAR,,} 转小写）故意
+    # 不一致，全靠两边凑巧对上。
     check_file "build/Debug/generators/conan_toolchain.cmake"
-    # 下面这条不是重复 —— 两条各管一头，实测过：把第 127 行改成小写之后，上面那条
+    # 下面这条不是重复 —— 两条各管一头，实测过：把那个路径改成小写之后，上面那条
     # 仍然 ✅（Conan 按自己的布局把工具链写在那儿，本来就该在），是下面这条报的红。
     #   check_file  → conan 侧布局变了 / 分支根本没进（PATH 断了文件就不会出现）
     #   下面这条    → 我们侧路径拼错了，工具链在但 CMake 没拿到
-    grep -q 'CMAKE_TOOLCHAIN_FILE.*conan_toolchain' build/debug-asan/CMakeCache.txt 2>/dev/null \
+    # 构建目录名随默认值变（sanitizer 默认关之后是 build/debug，开则是 build/debug-asan），
+    # 所以这里不写死 —— 顺着 my_build.bash 自己建的软链接找过去，它指哪就是哪。
+    _cache="$(dirname "$(readlink -f build/compile_commands.json)")/CMakeCache.txt"
+    grep -q 'CMAKE_TOOLCHAIN_FILE.*conan_toolchain' "$_cache" 2>/dev/null \
         && ok "CMake 真的采用了 conan 工具链（CMakeCache 有记录）" \
         || bad "工具链生成了却没被 CMake 采用"
 else

@@ -12,12 +12,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ===== 1. 选项 =====
-option(ENABLE_ASAN   "AddressSanitizer"                    ON)
+# 这里的默认值只在「绕过 my_build.bash、直接 cmake」时生效：脚本每次都会显式传
+# -DENABLE_xxx，而命令行 -D 优先于 option()。两处写成一样的，免得两种入口给出
+# 不同的构建结果（改默认值时别只改一边）。
+option(ENABLE_ASAN   "AddressSanitizer"                    OFF)
 option(ENABLE_TSAN   "ThreadSanitizer"                     OFF)
 option(ENABLE_UBSAN  "UndefinedBehaviorSanitizer"          OFF)
 option(USE_FOR_VALGRIND "Build with Valgrind-compatible debug info" OFF)
 option(ENABLE_PERF   "Keep frame pointer for perf"         ON)
-option(USE_MARCH_NATIVE "Enable -march=native (real HW)"   ON)   # ← WSL2 VM 上不要开
+option(USE_MARCH_NATIVE "Enable -march=native (real HW)"   OFF)  # ← 开了产物绑本机 CPU，跨机/VM 会 SIGILL
 option(ENABLE_LTO    "Link-time optimization"              OFF)
 option(ENABLE_OPENMP "OpenMP parallelization"              OFF)
 option(ENABLE_CCACHE "Use ccache if available"             ON)
