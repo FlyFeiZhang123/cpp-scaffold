@@ -48,9 +48,18 @@ set(INSTALL_GLOBAL   OFF)
 # 则是 0.35 对 0.12）。被插桩的大头是 harness 每轮的 State::KeepRunning()，不是那个
 # 看起来「没什么可量的」循环体。
 #
-# 同理 lto / openmp 也会落到第三方身上（第三方编译变慢、链接变慢、LTO 告警混进输出）。
-# 这条现在不算隐患：CI 的 release job 天天在跑 release+lto+openmp，是绿的 —— 真撞上
-# 奇怪的链接错误时再想起这里。
+# openmp 同样会落到第三方身上（第三方编译变慢、链接变慢）。这条现在不算隐患：CI 的
+# release job 天天在跑 release+openmp，是绿的。
+#
+# 但 lto 撞上了，而且是这套目录作用域唯一出过事的地方。第三方静态库被 -flto 编成 LLVM
+# bitcode 之后，GNU ar/ranlib 建符号索引时**只能**从 /usr/lib/bfd-plugins/ 自动加载 LTO
+# plugin —— clang 传的 -plugin 是给链接器的，到不了 ar 那里。而那个 symlink 未必和当前
+# clang 同版本：CI runner 上就是 LLVM 17 读 clang 18 的 bitcode，每个模块刷一行
+#   bfd plugin: ... Unknown attribute kind (91) (Producer: 'LLVM18.1.3' Reader: 'LLVM 17.0.6')
+# 索引于是生不出来，链接时 gtest / benchmark 的符号全部 undefined reference（本地却复现
+# 不了：这台机器的 bfd-plugins 里只有带版本号的 LLVMgold-18.so，不会被自动加载）。
+# release|clang 腿就是这么红的，release|gcc 没事 —— gcc 的 plugin 随 gcc 一起装，版本天然对得上。
+# 结论：lto 逐 target 加，只加在自己的 lib / exe / 两个测试 target 上，别碰第三方。
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
   # ── 调试信息 ──
@@ -84,11 +93,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_link_options(-fsanitize=undefined)
   endif()
 
-  # ── LTO ──
-  if(ENABLE_LTO)
-    add_compile_options(-flto)
-    add_link_options(-flto)
-  endif()
+  # ── LTO ── 故意不在这里：这套目录作用域里唯一的例外，逐 target 加在后面
+  # 「5.5 LTO」和 tests/CMakeLists.txt 里。原因见那一段。
 
   # ── OpenMP ──
   if(ENABLE_OPENMP)
@@ -142,6 +148,20 @@ add_executable(${EXECUTABLE_NAME} example/${EXECUTABLE_SRC})
 target_include_directories(${EXECUTABLE_NAME} PRIVATE include/)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE ${LIB_NAME} )
 # target_link_libraries(${EXECUTABLE_NAME} PRIVATE behaviortree_cpp::behaviortree_cpp)
+
+# ===== 5.5 LTO — 唯一逐 target 加的 flag =====
+# 为什么不能像「2. 编译选项」里其他 flag 那样用目录作用域：那会把 -flto 甩到 CPM 拉下来
+# 的 googletest / benchmark 上，它们的静态库一旦变成 LLVM bitcode，ar/ranlib 就可能建不出
+# 符号索引，链接时报一屏 gtest / benchmark 的 undefined reference（完整经过见第 2 节）。
+#
+# 代价是「新加的 target 会忘」—— 正是目录作用域当初要根治的那个病。这里的兜底是
+# scripts/assert_flags.py：release 档要求本项目**每个** TU 都带 -flto，忘一个就红。
+if(ENABLE_LTO)
+  foreach(_t ${LIB_NAME} ${EXECUTABLE_NAME})
+    target_compile_options(${_t} PRIVATE -flto)
+    target_link_options(${_t} PRIVATE -flto)
+  endforeach()
+endif()
 
 # 软链接由 my_build.bash 在每次构建后自动更新：build/<可执行文件名> → 当前构建目录下的二进制
 

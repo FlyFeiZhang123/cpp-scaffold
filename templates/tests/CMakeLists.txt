@@ -17,6 +17,13 @@ target_include_directories(${PROJECT_NAME}_unit_test PRIVATE
     ${PROJECT_SOURCE_DIR}/include
 )
 
+# LTO 逐 target 加，原因见顶层 CMakeLists.txt「5.5 LTO」：目录作用域会把 -flto 甩到
+# googletest / benchmark 的静态库上，链接时它们的符号会全变 undefined reference。
+if(ENABLE_LTO)
+  target_compile_options(${PROJECT_NAME}_unit_test PRIVATE -flto)
+  target_link_options(${PROJECT_NAME}_unit_test PRIVATE -flto)
+endif()
+
 enable_testing()
 include(GoogleTest)
 gtest_discover_tests(${PROJECT_NAME}_unit_test)
@@ -42,6 +49,11 @@ if(BUILD_BENCHMARKS)
     target_include_directories(${PROJECT_NAME}_benchmark PRIVATE
         ${PROJECT_SOURCE_DIR}/include
     )
+
+    if(ENABLE_LTO)   # 同上：见顶层 CMakeLists.txt「5.5 LTO」
+      target_compile_options(${PROJECT_NAME}_benchmark PRIVATE -flto)
+      target_link_options(${PROJECT_NAME}_benchmark PRIVATE -flto)
+    endif()
 
     # --benchmark_min_time 的单位后缀不能省：裸数字在新版 Google Benchmark 里是弃用
     # 路径，每个 benchmark 每次运行都刷一行 LOG(0)「should have a suffix」，跑一次
