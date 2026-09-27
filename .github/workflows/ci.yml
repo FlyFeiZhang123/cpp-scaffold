@@ -8,12 +8,28 @@ on:
 
 jobs:
   build:
-    name: "${{ matrix.compiler }} | ${{ matrix.sanitizer }}"
+    name: "${{ matrix.sanitizer }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc, clang]
+        # 2026-09-27 起只测 gcc，原来还有 clang 一维（4 消毒剂 × 2 编译器 = 8 腿）。
+        # 砍掉的理由不是「clang 不重要」，而是这个维度从没抓到过会影响 gcc 的问题：
+        # clang 腿历史上红过两次（-fopenmp 要另装 libomp-dev；LTO 撞上 bfd plugin 版本
+        # 错配），两次都是「clang 支持自己的 bug 被 clang 支持发现」，而且两次在本机都
+        # 复现不了（本机早装着 libomp；本机 bfd-plugins 里的 symlink 带版本号、不会被自动
+        # 加载）。也就是说那几条腿很大程度上在测 runner 镜像的 clang 装得对不对，而不是
+        # 在测用户的环境 —— 为一个不用的编译器、在一台没有的机器上持续付账。
+        #
+        # 代码里的 clang 分支一律保留，只是不再被 CI 覆盖：
+        #   - CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" 那个守卫改成只认 GNU 的话，
+        #     clang 用户会拿到**零个** flag —— 静默的洞，正是这套断言在防的东西
+        #   - my_build.bash 的 libomp 预检是唯一会告诉 clang 用户该装什么的地方
+        #
+        # 别顺手把 clang 腿单独加回来一条「意思意思」的：那两次故障它一次都接不住
+        # （一次要 openmp、一次要 release+lto），只会造出「有人在看着」的错觉。
+        # 要加就加回全套。
+        #
         # TSan 是后加的：消毒剂组合属于「参数解析层」的 bug，只有真跑那个组合才抓得到。
         # 加它之前 ./my_build.bash tsan 是直接失败的（当时 ASan 默认 ON，而 tsan) 不关它，
         # 一敲就撞上「ASan 和 TSan 互斥」）—— README 教的就是这条命令。
@@ -27,19 +43,13 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq cmake ninja-build libpfm4-dev
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            sudo apt-get install -y -qq clang
-          fi
 
       - name: Setup compiler
         run: |
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            echo "CC=clang"   >> $GITHUB_ENV
-            echo "CXX=clang++" >> $GITHUB_ENV
-          else
-            echo "CC=gcc"     >> $GITHUB_ENV
-            echo "CXX=g++"    >> $GITHUB_ENV
-          fi
+          # 显式写出来，不吃 runner 的默认值：矩阵现在只剩 gcc 一条线，
+          # 把「测的是谁」钉在明面上。
+          echo "CC=gcc"  >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
 
       - name: Generate test project from scaffold
         run: |
@@ -81,7 +91,7 @@ jobs:
           # 脚本本体在 scripts/assert_flags.py（release job 用的是同一个，本地也能直接跑）。
           python3 "${{ github.workspace }}/scripts/assert_flags.py" "${{ matrix.sanitizer }}"
 
-  # 与上面的矩阵互补：矩阵管 gcc/clang × 消毒剂组合，这个管「整套流程按用户的
+  # 与上面的矩阵互补：矩阵管消毒剂组合，这个管「整套流程按用户的
   # 用法从头跑一遍」—— 生成、编译、软链接、ctest 用例数、task_tracker、
   # update.bash 的 A/B/C 承诺，全在 scripts/scaffold_test.bash 里断言。
   scaffold:
@@ -98,7 +108,7 @@ jobs:
       - name: Run scaffold self-test
         run: ./scripts/scaffold_test.bash
 
-  # 矩阵管 gcc/clang × 消毒剂，scaffold 管整套流程 —— 但两者都没装 conan，于是
+  # 矩阵管消毒剂组合，scaffold 管整套流程 —— 但两者都没装 conan，于是
   # newproj 的 y 参数（生成 conanfile.txt）和 my_build.bash 的 conan 工具链这条路径
   # 在 CI 里从来是死的：conanfile.txt 生成了没人消化，工具链一次没建过。这不是故意
   # 跳过，而是「本机装了 conan 所以本地能跑、CI 没装所以跑不到」的盲区。
@@ -106,15 +116,11 @@ jobs:
   # 这个 job 装 conan 并把脚手架自测跑一遍，让 scaffold_test.bash 第 5 节真的执行。
   # 它钉住的是一个隐式契约：my_build.bash 写死 build/Debug/generators/ —— 大写
   # Debug 来自 Conan 的 cmake_layout，与构建目录 build/debug（默认不开 sanitizer 就没后缀）故意不一致。
-  # 两腿并行，墙钟成本为零；clang 腿另有价值：conan profile detect 会读 CC/CXX。
+  # （原本还有一条 clang 腿，理由是 conan profile detect 会读 CC/CXX；随编译器维度一起
+  #  砍了，理由见 build job 矩阵上那段。）
   conan:
-    name: "conan | ${{ matrix.compiler }}"
+    name: "conan"
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: [gcc, clang]
-
     steps:
       - uses: actions/checkout@v4
 
@@ -122,19 +128,13 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq cmake ninja-build libpfm4-dev
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            sudo apt-get install -y -qq clang
-          fi
 
       - name: Setup compiler
         run: |
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            echo "CC=clang"   >> $GITHUB_ENV
-            echo "CXX=clang++" >> $GITHUB_ENV
-          else
-            echo "CC=gcc"     >> $GITHUB_ENV
-            echo "CXX=g++"    >> $GITHUB_ENV
-          fi
+          # 显式写出来，不吃 runner 的默认值：矩阵现在只剩 gcc 一条线，
+          # 把「测的是谁」钉在明面上。
+          echo "CC=gcc"  >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
 
       # 走仓库自己的安装脚本（顺带把 scripts/conan_install.bash 也验了 —— 它此前
       # 没有任何测试）。conan 落在 ~/.local/bin，该目录默认不在 CI 的 PATH 上，而
@@ -157,17 +157,16 @@ jobs:
   # 本机实测它们能跑通（-O3 -DNDEBUG、零 -fsanitize、软链接指进 build/release/），但那只是
   # 「那天在那一台机器上」。这个 job 把它钉住。
   #
-  # 三个开关一次带上，各腿并行、墙钟成本 ≈ 0；真失败时从命令行里逐个摘掉即可定位。
+  # 三个开关一次带上；真失败时从命令行里逐个摘掉即可定位。
   # 断言的重点不是「它跑完了」，而是「它真的是 Release」—— 只看退出码的话，
   # `release)` 那行被人改成 Debug 也照样绿。
+  #
+  # 这里原本还有一条 clang 腿，装 clang + libomp-dev。2026-09-27 随编译器维度一起砍了
+  # （理由见 build job 矩阵上那段）。那次「clang 的 -fopenmp 要另装 libomp-dev」和
+  # 「LTO 撞 bfd plugin」是同一个模式：clang 支持自己的 bug 被 clang 支持发现。
   release:
-    name: "release | ${{ matrix.compiler }}"
+    name: "release"
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: [gcc, clang]
-
     steps:
       - uses: actions/checkout@v4
 
@@ -175,23 +174,12 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq cmake ninja-build libpfm4-dev
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            # libomp-dev 是 clang 的 OpenMP 运行时，不能省：gcc 的 -fopenmp 链 libgomp
-            # （随 gcc 一起进来），clang 链的是 LLVM 的 -lomp，不装这个包就是一句
-            # `ld: cannot find -lomp`。这个 job 第一次跑的时候 clang 腿正是这么挂的
-            # —— gcc 腿绿、clang 腿红，差别只在这一个包。
-            sudo apt-get install -y -qq clang libomp-dev
-          fi
 
       - name: Setup compiler
         run: |
-          if [ "${{ matrix.compiler }}" = "clang" ]; then
-            echo "CC=clang"   >> $GITHUB_ENV
-            echo "CXX=clang++" >> $GITHUB_ENV
-          else
-            echo "CC=gcc"     >> $GITHUB_ENV
-            echo "CXX=g++"    >> $GITHUB_ENV
-          fi
+          # 显式写出来，不吃 runner 的默认值（理由同 build job）。
+          echo "CC=gcc"  >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
 
       - name: Generate test project from scaffold
         run: |
