@@ -74,15 +74,21 @@ target_link_libraries(${EXECUTABLE_NAME} PRIVATE ${LIB_NAME} )
 # 软链接由 my_build.bash 在每次构建后自动更新：build/<可执行文件名> → 当前构建目录下的二进制
 
 # ===== 5. 编译选项 — 统一应用到库和可执行文件 =====
-# 用函数消除重复
-function(apply_flags flag)
-  target_compile_options(${LIB_NAME} PRIVATE ${flag})
-  target_compile_options(${EXECUTABLE_NAME} PRIVATE ${flag})
+# 用函数消除重复。
+#
+# 两个都是变参（没有形参，靠 ${ARGN}），别改回 `function(apply_flags flag)`：
+# 那样子列表就是签名，第 2 个及以后的实参进 ARGN 后没人引用、被静默丢掉，而 CMake
+# 不检查实参个数，写错了不报错也不警告。踩过一次：apply_flags(-fsanitize=address -O1)
+# 里的 -O1、-fno-sanitize-recover=all 全没进过命令行，读这里看不出来（白纸黑字写着），
+# 是 CI 去 grep compile_commands.json 才抓到的。
+function(apply_flags)
+  target_compile_options(${LIB_NAME} PRIVATE ${ARGN})
+  target_compile_options(${EXECUTABLE_NAME} PRIVATE ${ARGN})
 endfunction()
 
-function(apply_link_flags flag)
-  target_link_options(${LIB_NAME} PRIVATE ${flag})
-  target_link_options(${EXECUTABLE_NAME} PRIVATE ${flag})
+function(apply_link_flags)
+  target_link_options(${LIB_NAME} PRIVATE ${ARGN})
+  target_link_options(${EXECUTABLE_NAME} PRIVATE ${ARGN})
 endfunction()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -111,6 +117,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   endif()
 
   if(ENABLE_UBSAN)
+    # -fno-sanitize-recover=all 不能少：默认 UBSan 是「打印一行然后继续跑」，退出码仍为
+    # 0，ctest 判不出来 —— 带 UB 的代码照样绿。加上它才是撞到就 abort、测试真的变红。
     apply_flags(-fsanitize=undefined -fno-sanitize-recover=all)
     apply_link_flags(-fsanitize=undefined)
   endif()

@@ -66,6 +66,24 @@ jobs:
           test -x build/bench
           test -e build/compile_commands.json
 
+          # 断言开关真的落成了编译选项，而不是「构建退出码是 0」。
+          # 起因：apply_flags 曾是单形参函数，第 2 个及以后的实参被静默丢弃，于是
+          # -O1 和 -fno-sanitize-recover=all 写了但从没进过命令行。这种 bug 读
+          # CMakeLists.txt 看不出来（那儿白纸黑字写着），只有查产物才抓得到。
+          # 最阴的是 -fno-sanitize-recover：少了它 UBSan 变成「报错但继续跑」、退出码
+          # 0，这条腿永远不会红 —— 假绿比没有这条腿更糟（见 CMakeLists 里那段注释）。
+          # 变量名用 _cc 不用 CC：这个 step 里 CC 是前面 Setup compiler 写进环境的编译器名。
+          _cc=build/compile_commands.json
+          case "${{ matrix.sanitizer }}" in
+            ASan)  grep -q -- '-fsanitize=address'        "$_cc"
+                   grep -q -- '-O1'                       "$_cc" ;;
+            UBSan) grep -q -- '-fsanitize=undefined'      "$_cc"
+                   grep -q -- '-fno-sanitize-recover=all' "$_cc" ;;
+            TSan)  grep -q -- '-fsanitize=thread'         "$_cc"
+                   grep -q -- '-O1'                       "$_cc" ;;
+            None)  ! grep -q -- '-fsanitize'              "$_cc" ;;
+          esac
+
   # 与上面的矩阵互补：矩阵管 gcc/clang × 消毒剂组合，这个管「整套流程按用户的
   # 用法从头跑一遍」—— 生成、编译、软链接、ctest 用例数、task_tracker、
   # update.bash 的 A/B/C 承诺，全在 scripts/scaffold_test.bash 里断言。
