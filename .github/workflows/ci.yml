@@ -72,17 +72,14 @@ jobs:
           # CMakeLists.txt 看不出来（那儿白纸黑字写着），只有查产物才抓得到。
           # 最阴的是 -fno-sanitize-recover：少了它 UBSan 变成「报错但继续跑」、退出码
           # 0，这条腿永远不会红 —— 假绿比没有这条腿更糟（见 CMakeLists 里那段注释）。
-          # 变量名用 _cc 不用 CC：这个 step 里 CC 是前面 Setup compiler 写进环境的编译器名。
-          _cc=build/compile_commands.json
-          case "${{ matrix.sanitizer }}" in
-            ASan)  grep -q -- '-fsanitize=address'        "$_cc"
-                   grep -q -- '-O1'                       "$_cc" ;;
-            UBSan) grep -q -- '-fsanitize=undefined'      "$_cc"
-                   grep -q -- '-fno-sanitize-recover=all' "$_cc" ;;
-            TSan)  grep -q -- '-fsanitize=thread'         "$_cc"
-                   grep -q -- '-O1'                       "$_cc" ;;
-            None)  ! grep -q -- '-fsanitize'              "$_cc" ;;
-          esac
+          #
+          # 断言的是**全称**：项目自己的每一个 TU 都必须带，不是「文件里搜得到」。
+          # 早先写成 grep -q 时，库带上了就绿 —— 测试和 benchmark 一个 flag 都没吃到
+          # 照样过，而这正是当时真实的 bug（apply_flags 只作用于点名的 target，
+          # tests/CMakeLists.txt 建的两个 target 没人管）。查产物却只查「有没有」，
+          # 等于用一把量不出这个 bug 的尺子。
+          # 脚本本体在 scripts/assert_flags.py（release job 用的是同一个，本地也能直接跑）。
+          python3 "${{ github.workspace }}/scripts/assert_flags.py" "${{ matrix.sanitizer }}"
 
   # 与上面的矩阵互补：矩阵管 gcc/clang × 消毒剂组合，这个管「整套流程按用户的
   # 用法从头跑一遍」—— 生成、编译、软链接、ctest 用例数、task_tracker、
@@ -213,14 +210,12 @@ jobs:
           # 软链接得指进 build/release/：指向 debug 说明 BUILD_TYPE 没生效，而这
           # 单看退出码 0 是看不出来的（debug 也能构建、也能过测试）
           readlink build/test | grep -q 'build/release/'
-          # 编译选项层面的证据：-O3 -DNDEBUG 说明是 Release，
-          # -flto / -fopenmp 说明那两个开关真的落成了编译选项而不是被静默忽略
-          grep -q -- '-DNDEBUG'  build/compile_commands.json
-          grep -q -- '-O3'       build/compile_commands.json
-          grep -q -- '-flto'     build/compile_commands.json
-          grep -q -- '-fopenmp'  build/compile_commands.json
-          # Release 不该夹带消毒剂
-          ! grep -q -- '-fsanitize' build/compile_commands.json
+          # 编译选项层面的证据：-O3 -DNDEBUG 说明是 Release，-flto / -fopenmp 说明那两个
+          # 开关真的落成了编译选项而不是被静默忽略，且不该夹带消毒剂。
+          # 走和 build 矩阵同一个脚本：那边查的是「每个 TU 都带」，这里是「每个 TU 都有
+          # Release 的那几样」。原先这两处各写各的 grep，且都是「文件里搜得到就行」——
+          # 那个形状放过过一次真 bug（见 assert_flags.py 的说明）。
+          python3 "${{ github.workspace }}/scripts/assert_flags.py" release
 
   # 全仓库 20 个 .bash + 1 个 .sh，此前没有任何静态检查。加这个 job 的当天就抓到两条真
   # 问题：.vscode/sudo_gdb.sh 的 shebang 被一个空行挤到第二行（SC1128，error 级，而该文件
