@@ -43,8 +43,12 @@ if(BUILD_BENCHMARKS)
         ${PROJECT_SOURCE_DIR}/include
     )
 
+    # --benchmark_min_time 的单位后缀不能省：裸数字在新版 Google Benchmark 里是弃用
+    # 路径，每个 benchmark 每次运行都刷一行 LOG(0)「should have a suffix」，跑一次
+    # ./bench_use.bash 就是三行。0.01s 与裸 0.01 语义相同（都是 0.01 秒，实测迭代
+    # 次数与墙钟一致），改它纯粹是消警告。
     add_test(NAME ${PROJECT_NAME}_benchmark
         COMMAND ${PROJECT_NAME}_benchmark
-            --benchmark_min_time=0.01
+            --benchmark_min_time=0.01s
     )
 endif()

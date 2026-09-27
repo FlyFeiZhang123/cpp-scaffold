@@ -40,6 +40,17 @@ set(INSTALL_GLOBAL   OFF)
 #
 # 副作用：CPM 拉下来的 googletest / benchmark 也会吃到这些 flag。对 sanitizer 来说这
 # 是必须的，不是污染 —— 插桩和没插桩的 TU 混链本身就不合法。
+#
+# 代价是 sanitizer 档里的 benchmark 数字不能看：bench 只在 ./my_build.bash release 下取
+# （那一档这些 flag 一个都不加，目录作用域的副作用自然不存在），bench_use.bash 检测到
+# debug/asan 构建也会自己警告。别因为「bench 打的是玩具代码、循环体多半被常量折叠了」
+# 就以为不受影响 —— 实测同一个 -O1 下，带 ASan 0.348ns / 不带 0.230ns（对 -O3 release
+# 则是 0.35 对 0.12）。被插桩的大头是 harness 每轮的 State::KeepRunning()，不是那个
+# 看起来「没什么可量的」循环体。
+#
+# 同理 lto / openmp 也会落到第三方身上（第三方编译变慢、链接变慢、LTO 告警混进输出）。
+# 这条现在不算隐患：CI 的 release job 天天在跑 release+lto+openmp，是绿的 —— 真撞上
+# 奇怪的链接错误时再想起这里。
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
   # ── 调试信息 ──

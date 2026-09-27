@@ -166,7 +166,7 @@ if [ -x build/test ] && ./build/test > /dev/null 2>&1; then
 else
     bad "build/test 执行失败（软链接目标不对，或测试没过）"
 fi
-if [ -x build/bench ] && ./build/bench --benchmark_min_time=0.01 > /dev/null 2>&1; then
+if [ -x build/bench ] && ./build/bench --benchmark_min_time=0.01s > /dev/null 2>&1; then
     ok "build/bench 可直接执行"
 else
     bad "build/bench 执行失败"
