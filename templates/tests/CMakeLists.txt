@@ -17,11 +17,13 @@ target_include_directories(${PROJECT_NAME}_unit_test PRIVATE
     ${PROJECT_SOURCE_DIR}/include
 )
 
-# LTO 逐 target 加，原因见顶层 CMakeLists.txt「5.5 LTO」：目录作用域会把 -flto 甩到
-# googletest / benchmark 的静态库上，链接时它们的符号会全变 undefined reference。
+# LTO 走 IPO 属性逐 target 打开，原因见顶层 CMakeLists.txt「5.5 LTO」：目录作用域会把
+# LTO 甩到 googletest / benchmark 的静态库上，链接时它们的符号会全变 undefined reference。
+# 这里不再重复 check_ipo_supported()：顶层已经查过并因此退出了，且 CMP0069 是 NEW，
+# 真不支持的话这一句自己就会报错，不会静默降级。
 if(ENABLE_LTO)
-  target_compile_options(${PROJECT_NAME}_unit_test PRIVATE -flto)
-  target_link_options(${PROJECT_NAME}_unit_test PRIVATE -flto)
+  set_target_properties(${PROJECT_NAME}_unit_test PROPERTIES
+      INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
 enable_testing()
@@ -51,8 +53,8 @@ if(BUILD_BENCHMARKS)
     )
 
     if(ENABLE_LTO)   # 同上：见顶层 CMakeLists.txt「5.5 LTO」
-      target_compile_options(${PROJECT_NAME}_benchmark PRIVATE -flto)
-      target_link_options(${PROJECT_NAME}_benchmark PRIVATE -flto)
+      set_target_properties(${PROJECT_NAME}_benchmark PROPERTIES
+          INTERPROCEDURAL_OPTIMIZATION TRUE)
     endif()
 
     # --benchmark_min_time 的单位后缀不能省：裸数字在新版 Google Benchmark 里是弃用

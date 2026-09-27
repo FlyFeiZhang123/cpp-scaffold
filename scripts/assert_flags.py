@@ -18,6 +18,9 @@ import sys
 # 就是当初被静默丢掉的那一个（apply_flags 只认第一个形参），少了它 UBSan 变成
 # 「打印一行然后继续跑」、退出码 0，这条腿永远不会红 —— 只验 -fsanitize=undefined
 # 等于把同一次事故再放一遍。
+#
+# 匹配是子串（`flag not in 命令行`），所以 "-flto" 同时认 -flto=thin（clang）和
+# -flto=auto（gcc）：LTO 走 CMake 的 IPO 属性，具体发哪个由 CMake 按编译器决定。
 NEED = {
     "ASan":    ["-fsanitize=address", "-O1"],
     "UBSan":   ["-fsanitize=undefined", "-fno-sanitize-recover=all"],

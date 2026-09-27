@@ -59,7 +59,9 @@ set(INSTALL_GLOBAL   OFF)
 # 索引于是生不出来，链接时 gtest / benchmark 的符号全部 undefined reference（本地却复现
 # 不了：这台机器的 bfd-plugins 里只有带版本号的 LLVMgold-18.so，不会被自动加载）。
 # release|clang 腿就是这么红的，release|gcc 没事 —— gcc 的 plugin 随 gcc 一起装，版本天然对得上。
-# 结论：lto 逐 target 加，只加在自己的 lib / exe / 两个测试 target 上，别碰第三方。
+#
+# 所以 lto 不在这套目录作用域里，走 CMake 的 IPO 属性逐 target 打开（见「5.5 LTO」）——
+# 它本来就是 target 级的东西，只加在自己的 lib / exe / 两个测试 target 上，别碰第三方。
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
 
   # ── 调试信息 ──
@@ -93,8 +95,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_link_options(-fsanitize=undefined)
   endif()
 
-  # ── LTO ── 故意不在这里：这套目录作用域里唯一的例外，逐 target 加在后面
-  # 「5.5 LTO」和 tests/CMakeLists.txt 里。原因见那一段。
+  # ── LTO ── 故意不在这里：这套目录作用域里唯一的例外，走 IPO 属性逐 target 打开，
+  # 在后面「5.5 LTO」和 tests/CMakeLists.txt 里。原因见那两段。
 
   # ── OpenMP ──
   if(ENABLE_OPENMP)
@@ -149,18 +151,28 @@ target_include_directories(${EXECUTABLE_NAME} PRIVATE include/)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE ${LIB_NAME} )
 # target_link_libraries(${EXECUTABLE_NAME} PRIVATE behaviortree_cpp::behaviortree_cpp)
 
-# ===== 5.5 LTO — 唯一逐 target 加的 flag =====
-# 为什么不能像「2. 编译选项」里其他 flag 那样用目录作用域：那会把 -flto 甩到 CPM 拉下来
-# 的 googletest / benchmark 上，它们的静态库一旦变成 LLVM bitcode，ar/ranlib 就可能建不出
-# 符号索引，链接时报一屏 gtest / benchmark 的 undefined reference（完整经过见第 2 节）。
+# ===== 5.5 LTO — 唯一一处逐 target 加的开关 =====
+# 为什么不能像「2. 编译选项」里其他 flag 那样用目录作用域：那会把 LTO 甩到 CPM 拉下来的
+# googletest / benchmark 上，它们的静态库一旦变成 bitcode，ar/ranlib 就可能建不出符号
+# 索引，链接时报一屏 gtest / benchmark 的 undefined reference（完整经过见第 2 节）。
+#
+# 用 CMake 的 IPO 属性，而不是自己往命令行塞 -flto：这本来就是 target 级的东西，而且
+# check_ipo_supported() 把「当前工具链到底支不支持」在 configure 期就问清楚 —— 不支持
+# 就当场报错退出，不会拖到链接期变成一屏看不懂的 undefined reference（这正是上面那次
+# 事故的形状）。CMP0069 在 cmake_minimum_required(3.20) 下默认 NEW，属性设上就是强制的。
 #
 # 代价是「新加的 target 会忘」—— 正是目录作用域当初要根治的那个病。这里的兜底是
 # scripts/assert_flags.py：release 档要求本项目**每个** TU 都带 -flto，忘一个就红。
+# （注意这里发的不再是裸 -flto：实测 clang 拿到 -flto=thin、gcc 拿到 -flto=auto，
+#  断言是子串匹配所以都认。要改断言口径的话别忘了这一点。）
 if(ENABLE_LTO)
-  foreach(_t ${LIB_NAME} ${EXECUTABLE_NAME})
-    target_compile_options(${_t} PRIVATE -flto)
-    target_link_options(${_t} PRIVATE -flto)
-  endforeach()
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT _ipo_ok OUTPUT _ipo_msg)
+  if(NOT _ipo_ok)
+    message(FATAL_ERROR "ENABLE_LTO=ON，但当前工具链不支持 LTO：${_ipo_msg}")
+  endif()
+  set_target_properties(${LIB_NAME} ${EXECUTABLE_NAME} PROPERTIES
+      INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
 # 软链接由 my_build.bash 在每次构建后自动更新：build/<可执行文件名> → 当前构建目录下的二进制

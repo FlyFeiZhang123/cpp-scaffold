@@ -210,8 +210,9 @@ jobs:
           # 软链接得指进 build/release/：指向 debug 说明 BUILD_TYPE 没生效，而这
           # 单看退出码 0 是看不出来的（debug 也能构建、也能过测试）
           readlink build/test | grep -q 'build/release/'
-          # 编译选项层面的证据：-O3 -DNDEBUG 说明是 Release，-flto / -fopenmp 说明那两个
-          # 开关真的落成了编译选项而不是被静默忽略，且不该夹带消毒剂。
+          # 编译选项层面的证据：-O3 -DNDEBUG 说明是 Release，LTO / -fopenmp 说明那两个
+          # 开关真的落成了编译选项而不是被静默忽略，且不该夹带消毒剂。（LTO 走 CMake 的
+          # IPO 属性，实际发的是 -flto=thin / -flto=auto，断言按 -flto 子串匹配。）
           # 走和 build 矩阵同一个脚本：那边查的是「每个 TU 都带」，这里是「每个 TU 都有
           # Release 的那几样」。原先这两处各写各的 grep，且都是「文件里搜得到就行」——
           # 那个形状放过过一次真 bug（见 assert_flags.py 的说明）。
